@@ -161,6 +161,10 @@ export default function Home() {
     () => groups.filter((g) => stream === 'all' || g.stream === stream),
     [groups, stream],
   );
+  const activeStreams = useMemo(
+    () => streams.filter((s) => groups.some((g) => g.stream === s.id)),
+    [groups],
+  );
   const summary = summarize(selected);
   const visible = selected.filter((g) =>
     g.name.toLocaleLowerCase().includes(query.toLocaleLowerCase()),
@@ -379,7 +383,7 @@ export default function Home() {
             onChange={setStream}
             options={[
               { value: 'all', label: 'Барлық ағымдар' },
-              ...streams.map((s) => ({ value: s.id, label: s.label })),
+              ...activeStreams.map((s) => ({ value: s.id, label: s.label })),
             ]}
             label="Ағымды таңдау"
           />
@@ -466,7 +470,7 @@ export default function Home() {
               <span>Саны және пайызы</span>
             </div>
             <div className="streams-grid">
-              {streams
+              {activeStreams
                 .filter((s) => stream === 'all' || s.id === stream)
                 .map((s, i) => {
                   const gs = groups.filter((g) => g.stream === s.id),
