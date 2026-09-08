@@ -1,0 +1,3 @@
+import {baseline} from '@/lib/data';
+import {database,identity,fail,entrySelect} from '@/lib/server';
+export async function GET(){try{const user=await identity();const db=database();const [m,e]=await Promise.all([db.prepare('SELECT group_id AS groupId,total,renewed,updated,source FROM metrics').all(),db.prepare(entrySelect+' ORDER BY created DESC LIMIT 500').all()]);return Response.json({groups:baseline.map(g=>{const metric=m.results.find(x=>x.groupId===g.id);return metric?{...g,...metric}:g}),entries:e.results,user:{id:user.userId,name:user.displayName}},{headers:{'Cache-Control':'no-store'}})}catch(e){return fail(e)}}
