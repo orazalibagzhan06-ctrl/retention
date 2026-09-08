@@ -344,13 +344,6 @@ export default function Home() {
           </div>
         </a>
         <span className="semester">SMART · 11 СЫНЫП · 2027</span>
-        <a
-          href="https://juz40-edu.kz/catalogue"
-          target="_blank"
-          rel="noreferrer"
-        >
-          JUZ40 <ArrowUpRight size={16} />
-        </a>
       </header>
       <section className="page">
         <div className="eyebrow">МАТЕМАТИКАЛЫҚ САУАТТЫЛЫҚ</div>
@@ -485,14 +478,6 @@ export default function Home() {
                           <Layers size={20} />
                         </span>
                         <span className="small-label">SMART · 11 сынып</span>
-                        <a
-                          aria-label={s.label + ' JUZ40-та ашу'}
-                          href={s.source}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          <ArrowUpRight size={18} />
-                        </a>
                       </div>
                       <h3>{s.label}</h3>
                       <div className="stream-numbers">
