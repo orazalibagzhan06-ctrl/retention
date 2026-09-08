@@ -59,6 +59,7 @@ import {
   type Group,
   type Entry,
 } from '@/lib/data';
+import { exitedStudents } from '@/lib/exited-students';
 const num = (v: number) => new Intl.NumberFormat('kk-KZ').format(v);
 const pct = (v: number | null) =>
   v === null
@@ -122,6 +123,8 @@ export default function Home() {
   const [view, setView] = useState('overview'),
     [stream, setStream] = useState('all'),
     [query, setQuery] = useState(''),
+    [exitQuery, setExitQuery] = useState(''),
+    [exitReason, setExitReason] = useState('all'),
     [groups, setGroups] = useState<Group[]>(baseline),
     [entries, setEntries] = useState<Entry[]>([]),
     [user, setUser] = useState<{ id: string; name: string } | null>(null),
@@ -177,6 +180,31 @@ export default function Home() {
       e.kind === 'case' && (caseFilter === 'all' || e.status === caseFilter),
   );
   const practices = filteredEntries.filter((e) => e.kind === 'practice');
+  const allExited = useMemo(
+    () => [
+      ...exitedStudents,
+      ...practices.map((e) => ({
+        id: e.id,
+        name: e.title,
+        reason: e.reason || 'Көрсетілмеген',
+        curator: groups.find((g) => g.id === e.groupId)?.name || 'Көрсетілмеген',
+        subject: streamName(groups.find((g) => g.id === e.groupId)?.stream || ''),
+        date: e.created.slice(0, 10),
+      })),
+    ],
+    [groups, practices],
+  );
+  const exitReasons = useMemo(
+    () => [...new Set(allExited.map((student) => student.reason))].sort(),
+    [allExited],
+  );
+  const visibleExited = allExited.filter(
+    (student) =>
+      (exitReason === 'all' || student.reason === exitReason) &&
+      `${student.name} ${student.curator} ${student.subject}`
+        .toLocaleLowerCase()
+        .includes(exitQuery.toLocaleLowerCase()),
+  );
   const ranking = useMemo(() => {
     const byName = new Map<string, Group[]>();
     selected.forEach((g) => {
@@ -367,7 +395,7 @@ export default function Home() {
                 ['overview', 'Жалпы шолу'],
                 ['curators', 'Кураторлар'],
                 ['cases', 'Оқушымен жұмыс'],
-                ['experience', 'Тәжірибе алмасу'],
+                ['experience', 'Шыққан оқушылар'],
                 ['ranking', 'Рейтинг'],
               ].map(([v, l]) => (
                 <TabsTrigger key={v} value={v}>
@@ -908,60 +936,25 @@ export default function Home() {
           <>
             <div className="section-title">
               <div>
-                <h2>Тәжірибе алмасу</h2>
-                <p>Кураторлардан — кураторларға</p>
+                <h2>Шыққан оқушылар</h2>
+                <p>Шығу себептері бойынша тіркелген оқушылар</p>
               </div>
               <button className="action" onClick={() => open('practice')}>
-                <Plus size={17} /> Әдіс қосу
+                <Plus size={17} /> Оқушы қосу
               </button>
             </div>
-            {practices.length ? (
-              <div className="practice-grid">
-                {practices.map((e) => (
-                  <article className="practice-card" key={e.id}>
-                    <span className="badge">
-                      {streamName(
-                        groups.find((g) => g.id === e.groupId)?.stream || '',
-                      )}
-                    </span>
-                    <h3>
-                      <button onClick={() => showDetail(e)}>{e.title}</button>
-                    </h3>
-                    <p className="method-preview">{e.method}</p>
-                    <div className="result">
-                      <CheckCircle2 size={17} />
-                      <span>{e.result}</span>
-                    </div>
-                    <div className="practice-footer">
-                      <span className="avatar">
-                        {initials(
-                          groups.find((g) => g.id === e.groupId)?.name || 'К',
-                        )}
-                      </span>
-                      <span>
-                        {groups.find((g) => g.id === e.groupId)?.name}
-                      </span>
-                      <button
-                        aria-label={e.title + ' ашу'}
-                        onClick={() => showDetail(e)}
-                      >
-                        <ArrowRight size={17} />
-                      </button>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <section className="panel">
-                <Empty
-                  icon={<BookOpen size={36} />}
-                  title="Нәтижелі тәжірибе осы жерден басталады"
-                  text="Қолданған әдісіңізді, оның нәтижесін және дәлелін қосыңыз. Басқа кураторлар оны көріп, өз жұмысында қолдана алады."
-                  action={() => open('practice')}
-                  actionText="Тәжірибемен бөлісу"
-                />
-              </section>
-            )}
+            <div className="exit-filters">
+              <Picker value={exitReason} onChange={setExitReason} options={[{value:'all',label:'Барлық себеп'},...exitReasons.map((reason)=>({value:reason,label:reason}))]} label="Шығу себебі" />
+              <label className="search"><Search size={17}/><input value={exitQuery} onChange={(e)=>setExitQuery(e.target.value)} placeholder="Оқушыны немесе кураторды іздеу" /></label>
+              <span>{num(visibleExited.length)} оқушы</span>
+            </div>
+            <div className="exit-reasons">
+              {exitReasons.slice(0, 12).map((reason) => <button key={reason} className={exitReason===reason?'selected':''} onClick={()=>setExitReason(exitReason===reason?'all':reason)}><span>{reason}</span><b>{allExited.filter((student)=>student.reason===reason).length}</b></button>)}
+            </div>
+            <section className="panel">
+              <Table><TableHeader><TableRow><TableHead>Күні</TableHead><TableHead>Оқушы</TableHead><TableHead>Шығу себебі</TableHead><TableHead>Куратор</TableHead><TableHead>Пән</TableHead></TableRow></TableHeader><TableBody>{visibleExited.map((student)=><TableRow key={student.id}><TableCell>{student.date||'—'}</TableCell><TableCell><div className="person"><span className="avatar">{initials(student.name)}</span>{student.name}</div></TableCell><TableCell><span className="status status-left">{student.reason}</span></TableCell><TableCell>{student.curator}</TableCell><TableCell>{student.subject}</TableCell></TableRow>)}</TableBody></Table>
+              {!visibleExited.length&&<div className="compact-empty">Бұл сүзгі бойынша оқушы табылмады.</div>}
+            </section>
           </>
         )}
         <footer>
@@ -983,13 +976,15 @@ export default function Home() {
               {modal === 'metric'
                 ? 'Көрсеткішті жаңарту'
                 : modal === 'practice'
-                  ? 'Тәжірибемен бөлісу'
+                  ? 'Шыққан оқушыны қосу'
                   : 'Оқушымен жұмысты тіркеу'}
             </DialogTitle>
             <DialogDescription>
               {modal === 'metric'
                 ? 'JUZ40 деректеріне сүйеніп, ұзарту есебін жаңартыңыз.'
-                : 'Қолданған әдісіңізді және нәтижесін нақты жазыңыз.'}
+                : modal === 'practice'
+                  ? 'Оқушының аты-жөнін, шығу себебін және жүргізілген байланысты жазыңыз.'
+                  : 'Қолданған әдісіңізді және нәтижесін нақты жазыңыз.'}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={submit} className="entry-form">
@@ -1052,7 +1047,9 @@ export default function Home() {
                 <label>
                   {modal === 'case'
                     ? 'Оқушының коды немесе жағдай атауы'
-                    : 'Әдістің атауы'}
+                    : modal === 'practice'
+                      ? 'Оқушының аты-жөні'
+                      : 'Әдістің атауы'}
                   <input
                     name="title"
                     required
@@ -1060,12 +1057,14 @@ export default function Home() {
                     placeholder={
                       modal === 'case'
                         ? 'Мысалы: МС-024 · уақыты жетпейді'
-                        : 'Мысалы: жеке оқу жоспарын бірге жасау'
+                        : modal === 'practice'
+                          ? 'Мысалы: Айдана Сәрсен'
+                          : 'Мысалы: жеке оқу жоспарын бірге жасау'
                     }
                   />
                 </label>
                 <label>
-                  Жағдай / кету себебі
+                  {modal === 'practice' ? 'Шығу себебі' : 'Жағдай / кету себебі'}
                   <textarea
                     name="reason"
                     maxLength={2000}
@@ -1074,7 +1073,7 @@ export default function Home() {
                   />
                 </label>
                 <label>
-                  Жүргізілген байланыс және қолданған әдіс *
+                  {modal === 'practice' ? 'Жүргізілген байланыс / ескерту *' : 'Жүргізілген байланыс және қолданған әдіс *'}
                   <textarea
                     name="method"
                     required
@@ -1084,7 +1083,7 @@ export default function Home() {
                   />
                 </label>
                 <label>
-                  Нәтиже{modal === 'practice' ? ' *' : ''}
+                  {modal === 'practice' ? 'Қорытынды *' : 'Нәтиже'}
                   <textarea
                     name="result"
                     required={modal === 'practice'}
