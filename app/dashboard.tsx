@@ -137,6 +137,7 @@ export default function Home() {
     [busy, setBusy] = useState(false),
     [formError, setFormError] = useState(''),
     [detail, setDetail] = useState<Entry | null>(null),
+    [curatorDetail, setCuratorDetail] = useState<Group | null>(null),
     [caseFilter, setCaseFilter] = useState('all');
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -204,6 +205,13 @@ export default function Home() {
       `${student.name} ${student.curator} ${student.subject}`
         .toLocaleLowerCase()
         .includes(exitQuery.toLocaleLowerCase()),
+  );
+  const curatorExited = useMemo(
+    () =>
+      curatorDetail
+        ? allExited.filter((student) => student.curator === curatorDetail.name)
+        : [],
+    [allExited, curatorDetail],
   );
   const ranking = useMemo(() => {
     const byName = new Map<string, Group[]>();
@@ -645,7 +653,20 @@ export default function Home() {
               </TableHeader>
               <TableBody>
                 {visible.map((g) => (
-                  <TableRow key={g.id}>
+                  <TableRow
+                    key={g.id}
+                    className="curator-row"
+                    tabIndex={0}
+                    role="button"
+                    aria-label={g.name + ' оқушыларын ашу'}
+                    onClick={() => setCuratorDetail(g)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        setCuratorDetail(g);
+                      }
+                    }}
+                  >
                     <TableCell>
                       <div className="person">
                         <span className="avatar">{initials(g.name)}</span>
@@ -687,7 +708,10 @@ export default function Home() {
                           streamName(g.stream) +
                           ' көрсеткішін жаңарту'
                         }
-                        onClick={() => open('metric', g.id)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          open('metric', g.id);
+                        }}
                       >
                         <Pencil size={15} />
                       </button>
@@ -1151,6 +1175,74 @@ export default function Home() {
               </p>
             )}
           </form>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={curatorDetail !== null}
+        onOpenChange={(v) => {
+          if (!v) setCuratorDetail(null);
+        }}
+      >
+        <DialogContent className="form-dialog curator-dialog">
+          <DialogHeader>
+            <DialogTitle>{curatorDetail?.name}</DialogTitle>
+            <DialogDescription>
+              {curatorDetail && streamName(curatorDetail.stream)} · оқушылар
+              туралы мәлімет
+            </DialogDescription>
+          </DialogHeader>
+          {curatorDetail && (
+            <>
+              <div className="curator-stats">
+                <div>
+                  <span>Жалпы оқушы</span>
+                  <b>{num(curatorDetail.total)}</b>
+                </div>
+                <div>
+                  <span>Ұзартты</span>
+                  <b>{curatorDetail.renewed ?? 'Дерек жоқ'}</b>
+                </div>
+                <div>
+                  <span>RR</span>
+                  <b>
+                    {curatorDetail.renewed === null
+                      ? 'Дерек жоқ'
+                      : pct(rate(curatorDetail.renewed, curatorDetail.total))}
+                  </b>
+                </div>
+              </div>
+              <div className="detail-section curator-student-list">
+                <h3>Шыққан оқушылар</h3>
+                {curatorExited.length ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Оқушы</TableHead>
+                        <TableHead>Шығу себебі</TableHead>
+                        <TableHead>Күні</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {curatorExited.map((student) => (
+                        <TableRow key={student.id}>
+                          <TableCell>{student.name}</TableCell>
+                          <TableCell>{student.reason}</TableCell>
+                          <TableCell>{student.date || '—'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <p>Бұл куратор бойынша шыққан оқушы тіркелмеген.</p>
+                )}
+              </div>
+              <p className="form-hint">
+                Қазіргі оқушылардың толық аты-жөні JUZ40-тан жүктелгенде осы
+                жерге қосылады. Қазір жалпы саны мен төлем көрсеткіші көрсетіліп
+                тұр.
+              </p>
+            </>
+          )}
         </DialogContent>
       </Dialog>
       <Dialog
