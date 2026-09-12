@@ -1278,8 +1278,20 @@ export default function Home() {
                 />
                 <label>
                   Таңдалған маман
-                  <input name="method" readOnly value={referralTarget} required />
+                  <Picker
+                    value={referralTarget}
+                    onChange={setReferralTarget}
+                    options={[
+                      { value: '', label: 'Маманды таңдаңыз' },
+                      ...specialists.map(([name, role]) => ({
+                        value: `${name} · ${role}`,
+                        label: `${name} · ${role}`,
+                      })),
+                    ]}
+                    label="Таңдалған маман"
+                  />
                 </label>
+                <input type="hidden" name="method" value={referralTarget} />
                 <label>
                   Неге жеке сөйлесу қажет?
                   <textarea name="reason" rows={3} maxLength={2000} placeholder="Қысқаша жағдайын жазыңыз" />
@@ -1441,6 +1453,7 @@ export default function Home() {
                       <TableRow>
                         <TableHead>Оқушы</TableHead>
                         <TableHead>Ағым</TableHead>
+                        <TableHead><span className="sr-only">Әрекет</span></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1448,6 +1461,19 @@ export default function Home() {
                         <TableRow key={student.id}>
                           <TableCell>{student.name}</TableCell>
                           <TableCell>{student.streamLabel}</TableCell>
+                          <TableCell>
+                            <button
+                              className="referral-button"
+                              onClick={() => {
+                                setGroupId(curatorDetail.id);
+                                setReferralStudentId(student.id);
+                                setReferralTarget('');
+                                setModal('referral');
+                              }}
+                            >
+                              Жеке сөйлесуге ұсыну
+                            </button>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
