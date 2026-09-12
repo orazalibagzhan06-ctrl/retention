@@ -60,6 +60,7 @@ import {
   type Entry,
 } from '@/lib/data';
 import { exitedStudents } from '@/lib/exited-students';
+import { students } from '@/lib/students';
 const num = (v: number) => new Intl.NumberFormat('kk-KZ').format(v);
 const pct = (v: number | null) =>
   v === null
@@ -125,6 +126,7 @@ export default function Home() {
     [query, setQuery] = useState(''),
     [exitQuery, setExitQuery] = useState(''),
     [exitReason, setExitReason] = useState('all'),
+    [studentQuery, setStudentQuery] = useState(''),
     [groups, setGroups] = useState<Group[]>(baseline),
     [entries, setEntries] = useState<Entry[]>([]),
     [user, setUser] = useState<{ id: string; name: string } | null>(null),
@@ -206,12 +208,34 @@ export default function Home() {
         .toLocaleLowerCase()
         .includes(exitQuery.toLocaleLowerCase()),
   );
+  const visibleStudents = useMemo(
+    () =>
+      students.filter(
+        (student) =>
+          (stream === 'all' || student.stream === stream) &&
+          `${student.name} ${student.curator} ${student.streamLabel}`
+            .toLocaleLowerCase()
+            .includes(studentQuery.toLocaleLowerCase()),
+      ),
+    [stream, studentQuery],
+  );
   const curatorExited = useMemo(
     () =>
       curatorDetail
         ? allExited.filter((student) => student.curator === curatorDetail.name)
         : [],
     [allExited, curatorDetail],
+  );
+  const curatorStudents = useMemo(
+    () =>
+      curatorDetail
+        ? students.filter(
+            (student) =>
+              student.curator === curatorDetail.name &&
+              student.stream === curatorDetail.stream,
+          )
+        : [],
+    [curatorDetail],
   );
   const ranking = useMemo(() => {
     const byName = new Map<string, Group[]>();
@@ -348,6 +372,7 @@ export default function Home() {
                 ![
                   'overview',
                   'curators',
+                  'students',
                   'cases',
                   'experience',
                   'ranking',
@@ -402,6 +427,7 @@ export default function Home() {
               {[
                 ['overview', 'Жалпы шолу'],
                 ['curators', 'Кураторлар'],
+                ['students', 'Оқушылар'],
                 ['cases', 'Оқушымен жұмыс'],
                 ['experience', 'Шыққан оқушылар'],
                 ['ranking', 'Рейтинг'],
@@ -464,13 +490,17 @@ export default function Home() {
                     : 'Ұзарту деректері әлі жоқ'}
                 </small>
               </article>
-              <article className="stat">
+              <button
+                className="stat stat-button"
+                onClick={() => setView('students')}
+                aria-label="Барлық оқушылар тізімін ашу"
+              >
                 <span>
                   <Users size={19} /> Жалпы оқушылар
                 </span>
-                <strong>{num(summary.total)}</strong>
-                <small>{selected.length} топ бойынша</small>
-              </article>
+                <strong>{num(visibleStudents.length)}</strong>
+                <small>Тізімді ашу үшін басыңыз</small>
+              </button>
               <article className="stat">
                 <span>
                   <Layers size={19} /> Кураторлар
@@ -981,6 +1011,64 @@ export default function Home() {
             </section>
           </>
         )}
+        {view === 'students' && (
+          <>
+            <div className="section-title">
+              <div>
+                <h2>Барлық оқушылар</h2>
+                <p>JUZ40-тағы МС ағымдары бойынша тізім</p>
+              </div>
+              <span className="student-count">{num(visibleStudents.length)} оқушы</span>
+            </div>
+            <div className="exit-filters">
+              <label className="search">
+                <Search size={17} />
+                <input
+                  value={studentQuery}
+                  onChange={(e) => setStudentQuery(e.target.value)}
+                  placeholder="Оқушыны немесе кураторды іздеу"
+                />
+              </label>
+            </div>
+            <div className="information">
+              <Info size={18} />
+              <p>
+                Тізім JUZ40 платформасындағы 6 МС ағымынан жүктелді. Әр
+                жолда оқушының аты-жөні, кураторы және ағымы көрсетіледі.
+              </p>
+            </div>
+            <section className="panel student-table">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Оқушы</TableHead>
+                    <TableHead>Куратор</TableHead>
+                    <TableHead>Ағым</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {visibleStudents.map((student) => (
+                    <TableRow key={student.id}>
+                      <TableCell>
+                        <div className="person">
+                          <span className="avatar">{initials(student.name)}</span>
+                          {student.name || 'Аты көрсетілмеген'}
+                        </div>
+                      </TableCell>
+                      <TableCell>{student.curator}</TableCell>
+                      <TableCell>
+                        <span className="stream-label">{student.streamLabel}</span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {!visibleStudents.length && (
+                <div className="compact-empty">Іздеу бойынша оқушы табылмады.</div>
+              )}
+            </section>
+          </>
+        )}
         <footer>
           <span>МС Retention · 2026–2027</span>
           <span>
@@ -1196,7 +1284,7 @@ export default function Home() {
               <div className="curator-stats">
                 <div>
                   <span>Жалпы оқушы</span>
-                  <b>{num(curatorDetail.total)}</b>
+                  <b>{num(curatorStudents.length)}</b>
                 </div>
                 <div>
                   <span>Ұзартты</span>
@@ -1212,35 +1300,34 @@ export default function Home() {
                 </div>
               </div>
               <div className="detail-section curator-student-list">
-                <h3>Шыққан оқушылар</h3>
-                {curatorExited.length ? (
+                <h3>Оқушылар тізімі</h3>
+                {curatorStudents.length ? (
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Оқушы</TableHead>
-                        <TableHead>Шығу себебі</TableHead>
-                        <TableHead>Күні</TableHead>
+                        <TableHead>Ағым</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {curatorExited.map((student) => (
+                      {curatorStudents.map((student) => (
                         <TableRow key={student.id}>
                           <TableCell>{student.name}</TableCell>
-                          <TableCell>{student.reason}</TableCell>
-                          <TableCell>{student.date || '—'}</TableCell>
+                          <TableCell>{student.streamLabel}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 ) : (
-                  <p>Бұл куратор бойынша шыққан оқушы тіркелмеген.</p>
+                  <p>Бұл куратор бойынша оқушы табылмады.</p>
                 )}
               </div>
-              <p className="form-hint">
-                Қазіргі оқушылардың толық аты-жөні JUZ40-тан жүктелгенде осы
-                жерге қосылады. Қазір жалпы саны мен төлем көрсеткіші көрсетіліп
-                тұр.
-              </p>
+              {curatorExited.length > 0 && (
+                <p className="form-hint">
+                  Шыққан оқушылар: {num(curatorExited.length)}. Оларды
+                  «Шыққан оқушылар» бөлімінен себептерімен қарай аласыз.
+                </p>
+              )}
             </>
           )}
         </DialogContent>
