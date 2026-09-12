@@ -77,6 +77,16 @@ const initials = (s: string) =>
     .join('');
 const streamName = (id: string) =>
   streams.find((s) => s.id === id)?.label || id;
+const specialists = [
+  ['Гүлдана Рахметқали', 'МС супервайзері'],
+  ['Оразәлі Бағжан', 'МС-11 координаторы'],
+  ['Кеңшілік Айым', 'МС-21 координаторы'],
+  ['Дюсегалиева Даяна', 'МС-21 координаторы'],
+  ['Исламбек Абайұлы', 'МС мұғалімі'],
+  ['Бағдатов Рахат', 'МС мұғалімі'],
+  ['Мақатова Аружан', 'МС мұғалімі'],
+  ['Магазов Жангирхан', 'МС мұғалімі'],
+] as const;
 function Picker({
   value,
   onChange,
@@ -133,13 +143,15 @@ export default function Home() {
     [loading, setLoading] = useState(true),
     [error, setError] = useState(''),
     [notice, setNotice] = useState(''),
-    [modal, setModal] = useState<'case' | 'practice' | 'metric' | null>(null),
+    [modal, setModal] = useState<'case' | 'practice' | 'metric' | 'referral' | null>(null),
     [groupId, setGroupId] = useState(baseline[0].id),
     [status, setStatus] = useState('contact'),
     [busy, setBusy] = useState(false),
     [formError, setFormError] = useState(''),
     [detail, setDetail] = useState<Entry | null>(null),
     [curatorDetail, setCuratorDetail] = useState<Group | null>(null),
+    [referralTarget, setReferralTarget] = useState(''),
+    [referralStudentId, setReferralStudentId] = useState(''),
     [caseFilter, setCaseFilter] = useState('all');
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -237,6 +249,16 @@ export default function Home() {
         : [],
     [curatorDetail],
   );
+  const referralCandidates = useMemo(
+    () =>
+      students.filter(
+        (student) =>
+          student.curator === groups.find((group) => group.id === groupId)?.name &&
+          student.stream === groups.find((group) => group.id === groupId)?.stream,
+      ),
+    [groups, groupId],
+  );
+  const referrals = filteredEntries.filter((entry) => entry.kind === 'referral');
   const ranking = useMemo(() => {
     const byName = new Map<string, Group[]>();
     selected.forEach((g) => {
@@ -254,11 +276,13 @@ export default function Home() {
       );
   }, [selected]);
   const open = (
-    kind: 'case' | 'practice' | 'metric',
+    kind: 'case' | 'practice' | 'metric' | 'referral',
     id = selected[0]?.id || baseline[0].id,
   ) => {
     setGroupId(id);
     setStatus('contact');
+    setReferralTarget('');
+    setReferralStudentId('');
     setFormError('');
     setModal(kind);
   };
@@ -376,6 +400,7 @@ export default function Home() {
                   'cases',
                   'experience',
                   'ranking',
+                  'referrals',
                 ].includes(b.view)
               )
                 throw new Error('Invalid stream or view');
@@ -431,6 +456,7 @@ export default function Home() {
                 ['cases', 'Оқушымен жұмыс'],
                 ['experience', 'Шыққан оқушылар'],
                 ['ranking', 'Рейтинг'],
+                ['referrals', 'Жеке сөйлесу'],
               ].map(([v, l]) => (
                 <TabsTrigger key={v} value={v}>
                   {l}
@@ -869,6 +895,61 @@ export default function Home() {
             </div>
           </>
         )}
+        {view === 'referrals' && (
+          <>
+            <div className="section-title">
+              <div>
+                <h2>Жеке сөйлесуге ұсыну</h2>
+                <p>Оқушыны маманға бағыттап, байланыс сұрауын тіркеңіз</p>
+              </div>
+            </div>
+            <div className="specialist-grid">
+              {specialists.map(([name, role]) => (
+                <article className="specialist-card" key={name}>
+                  <span className="avatar">{initials(name)}</span>
+                  <div>
+                    <h3>{name}</h3>
+                    <p>{role}</p>
+                  </div>
+                  <button
+                    className="secondary-button"
+                    onClick={() => {
+                      open('referral');
+                      setReferralTarget(`${name} · ${role}`);
+                    }}
+                  >
+                    Оқушы ұсыну
+                  </button>
+                </article>
+              ))}
+            </div>
+            <section className="panel referrals-panel">
+              <div className="panel-heading">
+                <div>
+                  <h2>Жіберілген ұсыныстар</h2>
+                  <p>{referrals.length} оқушы маманға бағытталған</p>
+                </div>
+              </div>
+              {referrals.length ? (
+                <Table>
+                  <TableHeader><TableRow><TableHead>Оқушы</TableHead><TableHead>Куратор</TableHead><TableHead>Маман</TableHead><TableHead>Ескерту</TableHead></TableRow></TableHeader>
+                  <TableBody>
+                    {referrals.map((entry) => (
+                      <TableRow key={entry.id}>
+                        <TableCell>{entry.title}</TableCell>
+                        <TableCell>{groups.find((group) => group.id === entry.groupId)?.name || '—'}</TableCell>
+                        <TableCell>{entry.method}</TableCell>
+                        <TableCell>{entry.reason || '—'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="compact-empty">Әзірге жеке сөйлесуге ұсыныс жоқ.</div>
+              )}
+            </section>
+          </>
+        )}
         {view === 'cases' && (
           <>
             <div className="section-title">
@@ -1089,6 +1170,8 @@ export default function Home() {
                 ? 'Көрсеткішті жаңарту'
                 : modal === 'practice'
                   ? 'Шыққан оқушыны қосу'
+                  : modal === 'referral'
+                    ? 'Жеке сөйлесуге ұсыну'
                   : 'Оқушымен жұмысты тіркеу'}
             </DialogTitle>
             <DialogDescription>
@@ -1096,6 +1179,8 @@ export default function Home() {
                 ? 'JUZ40 деректеріне сүйеніп, ұзарту есебін жаңартыңыз.'
                 : modal === 'practice'
                   ? 'Оқушының аты-жөнін, шығу себебін және жүргізілген байланысты жазыңыз.'
+                  : modal === 'referral'
+                    ? 'Оқушыны таңдаңыз, маманға жіберу себебін қысқаша жазыңыз.'
                   : 'Қолданған әдісіңізді және нәтижесін нақты жазыңыз.'}
             </DialogDescription>
           </DialogHeader>
@@ -1154,6 +1239,55 @@ export default function Home() {
                   есептелмейді. Соңғы жаңарту: {current.updated.slice(0, 10)}.
                 </p>
               </div>
+            ) : modal === 'referral' ? (
+              <>
+                <label>
+                  Куратор және ағым
+                  <Picker
+                    value={groupId}
+                    onChange={(value) => {
+                      setGroupId(value);
+                      setReferralStudentId('');
+                    }}
+                    options={groups.map((group) => ({
+                      value: group.id,
+                      label: group.name + ' · ' + streamName(group.stream),
+                    }))}
+                    label="Куратор және ағым"
+                  />
+                </label>
+                <label>
+                  Оқушы
+                  <Picker
+                    value={referralStudentId}
+                    onChange={setReferralStudentId}
+                    options={[
+                      { value: '', label: 'Оқушыны таңдаңыз' },
+                      ...referralCandidates.map((student) => ({
+                        value: student.id,
+                        label: student.name || 'Аты көрсетілмеген',
+                      })),
+                    ]}
+                    label="Оқушыны таңдаңыз"
+                  />
+                </label>
+                <input
+                  type="hidden"
+                  name="title"
+                  value={referralCandidates.find((student) => student.id === referralStudentId)?.name || ''}
+                />
+                <label>
+                  Таңдалған маман
+                  <input name="method" readOnly value={referralTarget} required />
+                </label>
+                <label>
+                  Неге жеке сөйлесу қажет?
+                  <textarea name="reason" rows={3} maxLength={2000} placeholder="Қысқаша жағдайын жазыңыз" />
+                </label>
+                <input type="hidden" name="result" value="" />
+                <input type="hidden" name="followUp" value="" />
+                <input type="hidden" name="status" value="contact" />
+              </>
             ) : (
               <>
                 <label>
