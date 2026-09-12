@@ -59,7 +59,6 @@ import {
   type Group,
   type Entry,
 } from '@/lib/data';
-import { exitedStudents } from '@/lib/exited-students';
 import { students } from '@/lib/students';
 const num = (v: number) => new Intl.NumberFormat('kk-KZ').format(v);
 const pct = (v: number | null) =>
@@ -134,8 +133,6 @@ export default function Home() {
   const [view, setView] = useState('overview'),
     [stream, setStream] = useState('all'),
     [query, setQuery] = useState(''),
-    [exitQuery, setExitQuery] = useState(''),
-    [exitReason, setExitReason] = useState('all'),
     [studentQuery, setStudentQuery] = useState(''),
     [groups, setGroups] = useState<Group[]>(baseline),
     [entries, setEntries] = useState<Entry[]>([]),
@@ -194,32 +191,6 @@ export default function Home() {
     (e) =>
       e.kind === 'case' && (caseFilter === 'all' || e.status === caseFilter),
   );
-  const practices = filteredEntries.filter((e) => e.kind === 'practice');
-  const allExited = useMemo(
-    () => [
-      ...exitedStudents,
-      ...practices.map((e) => ({
-        id: e.id,
-        name: e.title,
-        reason: e.reason || 'Көрсетілмеген',
-        curator: groups.find((g) => g.id === e.groupId)?.name || 'Көрсетілмеген',
-        subject: streamName(groups.find((g) => g.id === e.groupId)?.stream || ''),
-        date: e.created.slice(0, 10),
-      })),
-    ],
-    [groups, practices],
-  );
-  const exitReasons = useMemo(
-    () => [...new Set(allExited.map((student) => student.reason))].sort(),
-    [allExited],
-  );
-  const visibleExited = allExited.filter(
-    (student) =>
-      (exitReason === 'all' || student.reason === exitReason) &&
-      `${student.name} ${student.curator} ${student.subject}`
-        .toLocaleLowerCase()
-        .includes(exitQuery.toLocaleLowerCase()),
-  );
   const visibleStudents = useMemo(
     () =>
       students.filter(
@@ -230,13 +201,6 @@ export default function Home() {
             .includes(studentQuery.toLocaleLowerCase()),
       ),
     [stream, studentQuery],
-  );
-  const curatorExited = useMemo(
-    () =>
-      curatorDetail
-        ? allExited.filter((student) => student.curator === curatorDetail.name)
-        : [],
-    [allExited, curatorDetail],
   );
   const curatorStudents = useMemo(
     () =>
@@ -379,7 +343,6 @@ export default function Home() {
                     'overview',
                     'curators',
                     'cases',
-                    'experience',
                     'ranking',
                   ],
                 },
@@ -398,7 +361,6 @@ export default function Home() {
                   'curators',
                   'students',
                   'cases',
-                  'experience',
                   'ranking',
                   'referrals',
                 ].includes(b.view)
@@ -454,7 +416,6 @@ export default function Home() {
                 ['curators', 'Кураторлар'],
                 ['students', 'Оқушылар'],
                 ['cases', 'Оқушымен жұмыс'],
-                ['experience', 'Шыққан оқушылар'],
                 ['ranking', 'Рейтинг'],
                 ['referrals', 'Жеке сөйлесу'],
               ].map(([v, l]) => (
@@ -1067,31 +1028,6 @@ export default function Home() {
             </section>
           </>
         )}
-        {view === 'experience' && (
-          <>
-            <div className="section-title">
-              <div>
-                <h2>Шыққан оқушылар</h2>
-                <p>Шығу себептері бойынша тіркелген оқушылар</p>
-              </div>
-              <button className="action" onClick={() => open('practice')}>
-                <Plus size={17} /> Оқушы қосу
-              </button>
-            </div>
-            <div className="exit-filters">
-              <Picker value={exitReason} onChange={setExitReason} options={[{value:'all',label:'Барлық себеп'},...exitReasons.map((reason)=>({value:reason,label:reason}))]} label="Шығу себебі" />
-              <label className="search"><Search size={17}/><input value={exitQuery} onChange={(e)=>setExitQuery(e.target.value)} placeholder="Оқушыны немесе кураторды іздеу" /></label>
-              <span>{num(visibleExited.length)} оқушы</span>
-            </div>
-            <div className="exit-reasons">
-              {exitReasons.slice(0, 12).map((reason) => <button key={reason} className={exitReason===reason?'selected':''} onClick={()=>setExitReason(exitReason===reason?'all':reason)}><span>{reason}</span><b>{allExited.filter((student)=>student.reason===reason).length}</b></button>)}
-            </div>
-            <section className="panel">
-              <Table><TableHeader><TableRow><TableHead>Күні</TableHead><TableHead>Оқушы</TableHead><TableHead>Шығу себебі</TableHead><TableHead>Куратор</TableHead><TableHead>Пән</TableHead></TableRow></TableHeader><TableBody>{visibleExited.map((student)=><TableRow key={student.id}><TableCell>{student.date||'—'}</TableCell><TableCell><div className="person"><span className="avatar">{initials(student.name)}</span>{student.name}</div></TableCell><TableCell><span className="status status-left">{student.reason}</span></TableCell><TableCell>{student.curator}</TableCell><TableCell>{student.subject}</TableCell></TableRow>)}</TableBody></Table>
-              {!visibleExited.length&&<div className="compact-empty">Бұл сүзгі бойынша оқушы табылмады.</div>}
-            </section>
-          </>
-        )}
         {view === 'students' && (
           <>
             <div className="section-title">
@@ -1482,12 +1418,6 @@ export default function Home() {
                   <p>Бұл куратор бойынша оқушы табылмады.</p>
                 )}
               </div>
-              {curatorExited.length > 0 && (
-                <p className="form-hint">
-                  Шыққан оқушылар: {num(curatorExited.length)}. Оларды
-                  «Шыққан оқушылар» бөлімінен себептерімен қарай аласыз.
-                </p>
-              )}
             </>
           )}
         </DialogContent>
