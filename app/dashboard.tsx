@@ -68,6 +68,13 @@ const pct = (v: number | null) =>
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       }).format(v) + '%';
+const paymentLabel = (state: 'paid' | 'waiting' | 'left' | 'unknown') =>
+  ({
+    paid: 'Төлем жасады',
+    waiting: 'Төлем күтілуде',
+    left: 'Шығады',
+    unknown: 'Төлем ашылмаған',
+  })[state];
 const initials = (s: string) =>
   s
     .split(' ')
@@ -134,6 +141,7 @@ export default function Home() {
     [stream, setStream] = useState('all'),
     [query, setQuery] = useState(''),
     [studentQuery, setStudentQuery] = useState(''),
+    [studentPaymentFilter, setStudentPaymentFilter] = useState('all'),
     [groups, setGroups] = useState<Group[]>(baseline),
     [entries, setEntries] = useState<Entry[]>([]),
     [user, setUser] = useState<{ id: string; name: string } | null>(null),
@@ -196,11 +204,13 @@ export default function Home() {
       students.filter(
         (student) =>
           (stream === 'all' || student.stream === stream) &&
+          (studentPaymentFilter === 'all' ||
+            student.paymentState === studentPaymentFilter) &&
           `${student.name} ${student.curator} ${student.streamLabel}`
             .toLocaleLowerCase()
             .includes(studentQuery.toLocaleLowerCase()),
       ),
-    [stream, studentQuery],
+    [stream, studentQuery, studentPaymentFilter],
   );
   const curatorStudents = useMemo(
     () =>
@@ -1038,6 +1048,18 @@ export default function Home() {
               <span className="student-count">{num(visibleStudents.length)} оқушы</span>
             </div>
             <div className="exit-filters">
+              <Picker
+                value={studentPaymentFilter}
+                onChange={setStudentPaymentFilter}
+                options={[
+                  { value: 'all', label: 'Барлық мәртебе' },
+                  { value: 'paid', label: 'Төлем жасады' },
+                  { value: 'waiting', label: 'Төлем күтілуде' },
+                  { value: 'left', label: 'Шығады' },
+                  { value: 'unknown', label: 'Төлем ашылмаған' },
+                ]}
+                label="Төлем мәртебесі"
+              />
               <label className="search">
                 <Search size={17} />
                 <input
@@ -1050,8 +1072,8 @@ export default function Home() {
             <div className="information">
               <Info size={18} />
               <p>
-                Тізім JUZ40 платформасындағы 6 МС ағымынан жүктелді. Әр
-                жолда оқушының аты-жөні, кураторы және ағымы көрсетіледі.
+                Тізім JUZ40 платформасындағы 6 МС ағымынан 15.09.2026 күні
+                жаңартылды. Төлем мен шығу мәртебесі әр оқушының қасында тұр.
               </p>
             </div>
             <section className="panel student-table">
@@ -1061,6 +1083,7 @@ export default function Home() {
                     <TableHead>Оқушы</TableHead>
                     <TableHead>Куратор</TableHead>
                     <TableHead>Ағым</TableHead>
+                    <TableHead>Келесі ай</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1076,6 +1099,14 @@ export default function Home() {
                       <TableCell>
                         <span className="stream-label">{student.streamLabel}</span>
                       </TableCell>
+                      <TableCell>
+                        <span className={'payment-state payment-' + student.paymentState}>
+                          {paymentLabel(student.paymentState)}
+                        </span>
+                        {student.paymentState === 'left' && student.reason && (
+                          <small className="row-subtitle">{student.reason}</small>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -1089,7 +1120,7 @@ export default function Home() {
         <footer>
           <span>МС Retention · 2026–2027</span>
           <span>
-            JUZ40 көшірмесі: 08.09.2026 · Автоматты синхрондау қосылмаған
+            JUZ40 көшірмесі: 15.09.2026 · Автоматты синхрондау қосылмаған
           </span>
         </footer>
       </section>
@@ -1389,6 +1420,7 @@ export default function Home() {
                       <TableRow>
                         <TableHead>Оқушы</TableHead>
                         <TableHead>Ағым</TableHead>
+                        <TableHead>Келесі ай</TableHead>
                         <TableHead><span className="sr-only">Әрекет</span></TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1397,6 +1429,14 @@ export default function Home() {
                         <TableRow key={student.id}>
                           <TableCell>{student.name}</TableCell>
                           <TableCell>{student.streamLabel}</TableCell>
+                          <TableCell>
+                            <span className={'payment-state payment-' + student.paymentState}>
+                              {paymentLabel(student.paymentState)}
+                            </span>
+                            {student.paymentState === 'left' && student.reason && (
+                              <small className="row-subtitle">{student.reason}</small>
+                            )}
+                          </TableCell>
                           <TableCell>
                             <button
                               className="referral-button"
