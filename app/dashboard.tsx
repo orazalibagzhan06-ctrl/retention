@@ -94,8 +94,14 @@ const specialists = [
   ['Бағдатов Рахат', 'МС мұғалімі'],
   ['Мақатова Аружан', 'МС мұғалімі'],
   ['Магазов Жангирхан', 'МС мұғалімі'],
-  ['Болат Бекжан', 'МС академ эдвайзері'],
+ ['Болат Бекжан', 'МС академ эдвайзері'],
  ] as const;
+const conversationStatuses = [
+  { value: 'contact', label: 'Әлі сөйлеспеді' },
+  { value: 'promised', label: 'Ойлануда' },
+  { value: 'retained', label: 'Қалады' },
+  { value: 'left', label: 'Қалмайды' },
+];
 const rrPlan = [
   { section: '1. Төлемді уақытылы жасату', tasks: [
     ['«Төлем ашылды. Ұтысқа iPhone 18 Pro Max» шаблонын топтарға 100% тарату', 'Айфон ұтысы арқылы ертерек, уақытылы төлем жасату', '15.09', 'Супервайзер, координатор, МС-11/21 кураторлар'],
@@ -320,6 +326,11 @@ export default function Home({ viewer }: { viewer: Curator }) {
     [groups, groupId],
   );
   const referrals = filteredEntries.filter((entry) => entry.kind === 'referral');
+  const specialistProgress = specialists.map(([name, role]) => ({
+    name,
+    role,
+    count: referrals.filter((entry) => entry.method.startsWith(name + ' · ') && entry.status !== 'contact').length,
+  }));
   const selectedRiskStudents = useMemo(() => riskStudents.filter((student) => student.specialist === riskSpecialist), [riskSpecialist]);
   const riskCount = useCallback((name: string) => riskStudents.filter((student) => student.specialist === name).length, []);
   const ranking = useMemo(() => {
@@ -980,6 +991,13 @@ export default function Home({ viewer }: { viewer: Curator }) {
                 </article>
               ))}
             </div>
+            <section className="panel specialist-chart" aria-label="Жеке сөйлесу нәтижелері">
+              <div className="panel-heading"><div><span className="risk-kicker">ЖЕКЕ СӨЙЛЕСУ НӘТИЖЕСІ</span><h2>9 басшының көрсеткіші</h2><p>Мақсат — әр қызметкер 50 оқушымен сөйлесіп, нәтижесін тіркейді.</p></div><b className="chart-goal">Шек: 50 оқушы</b></div>
+              <div className="chart-scale"><span>50</span><span>25</span><span>0</span></div>
+              <div className="specialist-bars">
+                {specialistProgress.map((item) => <div className="specialist-bar-item" key={item.name}><div className="specialist-bar-track"><div className="specialist-bar-fill" style={{height: `${Math.min(item.count, 50) / 50 * 100}%`}}><b>{item.count || ''}</b></div></div><strong>{item.name.split(' ')[0]}</strong><span>{item.count} / 50</span></div>)}
+              </div>
+            </section>
             <section className="panel risk-roster" id="risk-student-list">
               <div className="panel-heading"><div><span className="risk-kicker">ТӘУЕКЕЛ ОҚУШЫЛАРЫ · {riskStudents.length}</span><h2>Оқушылар тізімі</h2><p>Excel тізімінен: тамыз және қыркүйек оқушылары</p></div></div>
               <div className="risk-caption"><b>{riskSpecialist}</b><span>{selectedRiskStudents.length} оқушы · Тамыз {selectedRiskStudents.filter((student) => student.stream === 'Тамыз').length} · Қыркүйек {selectedRiskStudents.filter((student) => student.stream === 'Қыркүйек').length}</span></div>
@@ -994,13 +1012,14 @@ export default function Home({ viewer }: { viewer: Curator }) {
               </div>
               {referrals.length ? (
                 <Table>
-                  <TableHeader><TableRow><TableHead>Оқушы</TableHead><TableHead>Куратор</TableHead><TableHead>Маман</TableHead><TableHead>Ескерту</TableHead></TableRow></TableHeader>
+                  <TableHeader><TableRow><TableHead>Оқушы</TableHead><TableHead>Куратор</TableHead><TableHead>Маман</TableHead><TableHead>Нәтиже</TableHead><TableHead>Пікір</TableHead></TableRow></TableHeader>
                   <TableBody>
                     {referrals.map((entry) => (
                       <TableRow key={entry.id}>
                         <TableCell>{entry.title}</TableCell>
                         <TableCell>{groups.find((group) => group.id === entry.groupId)?.name || '—'}</TableCell>
                         <TableCell>{entry.method}</TableCell>
+                        <TableCell><span className={'status status-' + entry.status}>{conversationStatuses.find((item) => item.value === entry.status)?.label || 'Әлі сөйлеспеді'}</span></TableCell>
                         <TableCell>{entry.reason || '—'}</TableCell>
                       </TableRow>
                     ))}
@@ -1198,7 +1217,8 @@ export default function Home({ viewer }: { viewer: Curator }) {
                     <TableHead>Оқушы</TableHead>
                     <TableHead>Куратор</TableHead>
                     <TableHead>Ағым</TableHead>
-                    <TableHead>Келесі ай</TableHead>
+                      <TableHead>Келесі ай</TableHead>
+                      <TableHead><span className="sr-only">Әрекет</span></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1221,6 +1241,9 @@ export default function Home({ viewer }: { viewer: Curator }) {
                         {student.paymentState === 'left' && student.reason && (
                           <small className="row-subtitle">{student.reason}</small>
                         )}
+                      </TableCell>
+                      <TableCell>
+                        <button className="referral-button" onClick={() => { setGroupId(student.groupId); setReferralStudentId(student.id); setReferralTarget(''); setStatus('contact'); setModal('referral'); }}>Сөйлесу нәтижесі</button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -1385,12 +1408,20 @@ export default function Home({ viewer }: { viewer: Curator }) {
                 </label>
                 <input type="hidden" name="method" value={referralTarget} />
                 <label>
-                  Неге жеке сөйлесу қажет?
-                  <textarea name="reason" rows={3} maxLength={2000} placeholder="Қысқаша жағдайын жазыңыз" />
+                  Пікір / сөйлесу қорытындысы
+                  <textarea name="reason" rows={3} maxLength={2000} placeholder="Оқушы не деді, қандай келісімге келдіңіз?" />
                 </label>
                 <input type="hidden" name="result" value="" />
                 <input type="hidden" name="followUp" value="" />
-                <input type="hidden" name="status" value="contact" />
+                <label>
+                  Оқушының шешімі
+                  <Picker value={status} onChange={setStatus} options={conversationStatuses} label="Оқушының шешімі" />
+                </label>
+                <label className="upload">
+                  <Paperclip size={18} /> Сөйлесу дәлелі / фото
+                  <input type="file" name="file" accept="image/png,image/jpeg,image/webp,application/pdf" />
+                  <small>PNG, JPG, WEBP, PDF · 10 МБ-қа дейін.</small>
+                </label>
               </>
             ) : (
               <>
