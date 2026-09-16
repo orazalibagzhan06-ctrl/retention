@@ -12,7 +12,10 @@ function config() {
   const values = env as unknown as Record<string, string | undefined>;
   let accounts: Account[] = [];
   try { accounts = JSON.parse(values.MS_ACCOUNTS || '[]') as Account[]; } catch {}
-  if (values.CONVERSATION_LOGIN && values.CONVERSATION_PASSWORD) accounts.push({ login: values.CONVERSATION_LOGIN, password: values.CONVERSATION_PASSWORD, displayName: values.CONVERSATION_NAME || 'Жеке сөйлесу', role: 'conversation' });
+  if (values.CONVERSATION_LOGIN && values.CONVERSATION_PASSWORD) {
+    accounts = accounts.filter((account) => account.login !== values.CONVERSATION_LOGIN);
+    accounts.unshift({ login: values.CONVERSATION_LOGIN, password: values.CONVERSATION_PASSWORD, displayName: values.CONVERSATION_NAME || 'Жеке сөйлесу', role: 'conversation' });
+  }
   if (!accounts.length && values.CURATOR_LOGIN && values.CURATOR_PASSWORD) accounts = [{ login: values.CURATOR_LOGIN, password: values.CURATOR_PASSWORD, displayName: 'Админ', role: 'admin' }];
   return { accounts, secret: values.CURATOR_SESSION_SECRET || '' };
 }

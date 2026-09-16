@@ -209,7 +209,7 @@ async function api(url: string, init?: RequestInit) {
   return b;
 }
 export default function Home({ viewer }: { viewer: Curator }) {
-  const [view, setView] = useState(viewer.role === 'specialist' || viewer.role === 'conversation' ? 'referrals' : 'overview'),
+  const [view, setView] = useState(viewer.role === 'specialist' ? 'referrals' : 'overview'),
     [stream, setStream] = useState('all'),
     [query, setQuery] = useState(''),
     [studentQuery, setStudentQuery] = useState(''),
