@@ -1,4 +1,5 @@
 import { currentGroups } from './current-groups';
+import { students } from './students';
 export type Group = {id:string; stream:string; name:string; total:number; renewed:number|null; source:string; updated:string};
 export const sourceBase='https://juz40-edu.kz/headTeacher/subjects/e6d6f884-5f5a-46c0-9b5a-929051b9a3d8/';
 export const streams=[
@@ -23,7 +24,15 @@ const julyCurators = new Set([
 ]);
 export const baseline: Group[] = currentGroups
  .filter((group) => !['gum-jul','tech-jul'].includes(group.stream) || julyCurators.has(group.name.trim()))
- .map((group) => ({ ...group }));
+ .map((group) => {
+   // Платформадағы шілде топтарының «жалпы» санына бұрыннан шыққан
+   // оқушылар да кіріп қалған. Сондықтан шілде үшін тек тізімде бар
+   // оқушыларды есептейміз.
+   if (group.stream === 'gum-jul' || group.stream === 'tech-jul') {
+     return { ...group, total: students.filter((student) => student.groupId === group.id).length };
+   }
+   return { ...group };
+ });
 export type Entry={id:string;kind:'case'|'practice'|'referral';groupId:string;title:string;reason:string;method:string;result:string;status:string;followUp:string;fileId:string|null;fileName:string|null;created:string;author:string;userId:string};
 export function rate(renewed:number,total:number){return total>0?renewed/total*100:null}
 export function summarize(groups:Group[]){const known=groups.filter(g=>g.renewed!==null); const denominator=known.reduce((n,g)=>n+g.total,0);const renewed=known.reduce((n,g)=>n+(g.renewed??0),0);return {total:groups.reduce((n,g)=>n+g.total,0),known:known.length,denominator,renewed,rr:rate(renewed,denominator),missing:groups.length-known.length}}
