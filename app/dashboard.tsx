@@ -60,6 +60,7 @@ import {
   type Entry,
 } from '@/lib/data';
 import { students } from '@/lib/students';
+import { riskStudents } from '@/lib/risk-students';
 import type { Curator } from '@/lib/curator-auth';
 const num = (v: number) => new Intl.NumberFormat('kk-KZ').format(v);
 const pct = (v: number | null) =>
@@ -221,6 +222,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
     [curatorDetail, setCuratorDetail] = useState<Group | null>(null),
     [referralTarget, setReferralTarget] = useState(''),
     [referralStudentId, setReferralStudentId] = useState(''),
+    [riskSpecialist, setRiskSpecialist] = useState('Гүлдана Рахметқали'),
     [caseFilter, setCaseFilter] = useState('all'),
     [planStatus, setPlanStatus] = useState<Record<string, 'done' | 'not_done'>>({});
   const refresh = useCallback(async () => {
@@ -306,6 +308,8 @@ export default function Home({ viewer }: { viewer: Curator }) {
     [groups, groupId],
   );
   const referrals = filteredEntries.filter((entry) => entry.kind === 'referral');
+  const selectedRiskStudents = useMemo(() => riskStudents.filter((student) => student.specialist === riskSpecialist), [riskSpecialist]);
+  const riskCount = useCallback((name: string) => riskStudents.filter((student) => student.specialist === name).length, []);
   const ranking = useMemo(() => {
     const byName = new Map<string, Group[]>();
     selected.forEach((g) => {
@@ -968,9 +972,15 @@ export default function Home({ viewer }: { viewer: Curator }) {
                   >
                     Оқушы ұсыну
                   </button>
+                  <button className="risk-list-button" onClick={() => setRiskSpecialist(name)}>Тізім · {riskCount(name)}</button>
                 </article>
               ))}
             </div>
+            <section className="panel risk-roster">
+              <div className="panel-heading"><div><h2>Тәуекел оқушылары</h2><p>Excel тізімінен тек тамыз және қыркүйек: 247 оқушы</p></div><div className="risk-tabs">{specialists.map(([name]) => <button key={name} data-active={riskSpecialist === name} onClick={() => setRiskSpecialist(name)}>{name.split(' ').slice(0, 2).join(' ')} · {riskCount(name)}</button>)}</div></div>
+              <div className="risk-caption"><b>{riskSpecialist}</b><span>{selectedRiskStudents.length} оқушы · Тамыз {selectedRiskStudents.filter((student) => student.stream === 'Тамыз').length} · Қыркүйек {selectedRiskStudents.filter((student) => student.stream === 'Қыркүйек').length}</span></div>
+              <Table><TableHeader><TableRow><TableHead>Оқушы</TableHead><TableHead>Ағым</TableHead><TableHead>Куратор</TableHead></TableRow></TableHeader><TableBody>{selectedRiskStudents.map((student, index) => <TableRow key={`${student.name}-${index}`}><TableCell>{student.name}</TableCell><TableCell>{student.stream}</TableCell><TableCell>{student.curator}</TableCell></TableRow>)}</TableBody></Table>
+            </section>
             <section className="panel referrals-panel">
               <div className="panel-heading">
                 <div>
