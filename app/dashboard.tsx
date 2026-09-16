@@ -132,6 +132,7 @@ const rrPlan = [
 const groupSchedule = [
   ['17.09, бейсенбі', 2, 4], ['18.09, жұма', 1, 4], ['21.09, дүйсенбі', 2, 3], ['22.09, сейсенбі', 1, 3], ['23.09, сәрсенбі', 2, 3], ['24.09, бейсенбі', 1, 3], ['25.09, жұма', 2, 3], ['28.09, дүйсенбі', 1, 3], ['29.09, сейсенбі', 1, 3], ['30.09, сәрсенбі', 1, 3],
 ] as const;
+function PlanCheck({ value, onChange, disabled }: { value?: 'done' | 'not_done'; onChange: (value: 'done' | 'not_done') => void; disabled: boolean }) { return <span className="plan-check"><button disabled={disabled} data-active={value === 'done'} onClick={() => onChange('done')}>✓ Орындалды</button><button disabled={disabled} data-active={value === 'not_done'} onClick={() => onChange('not_done')}>✕ Орындалмады</button></span>; }
 function Picker({
   value,
   onChange,
@@ -196,12 +197,14 @@ export default function Home({ viewer }: { viewer: Curator }) {
     [curatorDetail, setCuratorDetail] = useState<Group | null>(null),
     [referralTarget, setReferralTarget] = useState(''),
     [referralStudentId, setReferralStudentId] = useState(''),
-    [caseFilter, setCaseFilter] = useState('all');
+    [caseFilter, setCaseFilter] = useState('all'),
+    [planStatus, setPlanStatus] = useState<Record<string, 'done' | 'not_done'>>({});
   const refresh = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const b = await api('/api/dashboard');
+      const [b, plan] = await Promise.all([api('/api/dashboard'), fetch('/api/plan-status').then((response) => response.json())]);
+      setPlanStatus(Object.fromEntries((plan.items || []).map((item: { date: string; month: string; status: 'done' | 'not_done' }) => [`${item.date}-${item.month}`, item.status])));
       setGroups(b.groups);
       setEntries(b.entries);
       setUser(b.user);
@@ -435,6 +438,11 @@ export default function Home({ viewer }: { viewer: Curator }) {
     return () => abort.abort();
   }, []);
   const logout = async () => { await fetch('/api/logout', { method: 'POST' }); window.location.assign('/login'); };
+  const setPlanCheck = async (date: string, month: 'aug' | 'sep', value: 'done' | 'not_done') => {
+    const response = await fetch('/api/plan-status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date, month, status: value }) });
+    if (!response.ok) { setNotice('Бұл белгіні өзгертуге рұқсат жоқ'); return; }
+    setPlanStatus((current) => ({ ...current, [`${date}-${month}`]: value }));
+  };
   const showDetail = (e: Entry) => {
     setDetail(e);
     setStatus(e.status);
@@ -981,7 +989,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
               <div className="rr-goal"><span>RR МАҚСАТЫ</span><strong>91%+</strong><p>Әр қызметкер дедлайнмен танысып, өзіне тиесілі жұмысты уақытында орындауы қажет.</p></div>
               <section className="group-schedule" aria-label="Ортақ топ жүргізу кестесі">
                 <div><span>ОРТАҚ ТОП ЖҮРГІЗУ</span><h3>17–30 қыркүйек кестесі</h3><p>Сенбі мен жексенбі есепке алынбаған. 14 тамыз және 32 қыркүйек кураторы жұмыс күндеріне тең бөлінді.</p></div>
-                <div className="schedule-table"><div className="schedule-head"><span>Күні</span><span>Тамыз</span><span>Қыркүйек</span><span>Барлығы</span></div>{groupSchedule.map(([date, august, september]) => <div className="schedule-row" key={date}><span>{date}</span><span>{august} куратор</span><span>{september} куратор</span><b>{august + september} куратор</b></div>)}<div className="schedule-total"><span>Жалпы</span><b>14 куратор</b><b>32 куратор</b><b>46 куратор</b></div></div>
+                <div className="schedule-table"><div className="schedule-head"><span>Күні</span><span>Тамыз</span><span>Қыркүйек</span><span>Барлығы</span></div>{groupSchedule.map(([date, august, september]) => <div className="schedule-row" key={date}><span>{date}</span><span>{august} куратор <PlanCheck value={planStatus[`${date}-aug`]} onChange={(value) => void setPlanCheck(date, 'aug', value)} disabled={viewer.role === 'specialist' || (viewer.role === 'curator' && viewer.month !== 'aug')} /></span><span>{september} куратор <PlanCheck value={planStatus[`${date}-sep`]} onChange={(value) => void setPlanCheck(date, 'sep', value)} disabled={viewer.role === 'specialist' || (viewer.role === 'curator' && viewer.month !== 'sep')} /></span><b>{august + september} куратор</b></div>)}<div className="schedule-total"><span>Жалпы</span><b>14 куратор</b><b>32 куратор</b><b>46 куратор</b></div></div>
               </section>
               {rrPlan.map((block) => (
                 <details key={block.section} className="rr-plan-block" open>
