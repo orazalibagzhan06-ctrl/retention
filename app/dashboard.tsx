@@ -490,15 +490,15 @@ export default function Home({ viewer }: { viewer: Curator }) {
           </Tabs>
         </div>
         <div className="filterbar">
-          <Picker
-            value={stream}
-            onChange={setStream}
-            options={[
-              { value: 'all', label: 'Барлық ағымдар' },
-              ...activeStreams.map((s) => ({ value: s.id, label: s.label })),
-            ]}
-            label="Ағымды таңдау"
-          />
+          {view !== 'cases' && <Picker
+              value={stream}
+              onChange={setStream}
+              options={[
+                { value: 'all', label: 'Барлық ағымдар' },
+                ...activeStreams.map((s) => ({ value: s.id, label: s.label })),
+              ]}
+              label="Ағымды таңдау"
+            />}
           <span className="period">
             <Clock size={15} /> Шілде–қыркүйек · 2026
           </span>
