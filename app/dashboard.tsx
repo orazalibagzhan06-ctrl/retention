@@ -199,12 +199,22 @@ function Picker({
 async function api(url: string, init?: RequestInit) {
   const r = await fetch(url, init);
   const text = await r.text();
-  const b = (text ? JSON.parse(text) : {}) as {
+  let b: {
+    error?: string;
+    groups: Group[];
+    entries: Entry[];
+    user: { id: string; name: string };
+  } = {} as {
     error?: string;
     groups: Group[];
     entries: Entry[];
     user: { id: string; name: string };
   };
+  try {
+    b = text ? JSON.parse(text) : b;
+  } catch {
+    throw new Error('Серверден қате жауап келді. Бетті жаңартып, қайта көріңіз.');
+  }
   if (!r.ok) throw new Error(b.error || 'Сұрау орындалмады.');
   return b;
 }
@@ -1051,7 +1061,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
             <section className="panel risk-roster" id="risk-student-list">
               <div className="panel-heading"><div><span className="risk-kicker">ТӘУЕКЕЛ ОҚУШЫЛАРЫ</span><h2>Оқушылар тізімі</h2><p>Маманға ұсынылған оқушы да осы маманның тізіміне бірден қосылады.</p></div></div>
               <div className="risk-caption"><b>{riskSpecialist}</b><span>{selectedRiskStudents.length} оқушы · Тамыз {selectedRiskStudents.filter((student) => student.stream === 'Тамыз').length} · Қыркүйек {selectedRiskStudents.filter((student) => student.stream === 'Қыркүйек').length}</span></div>
-              <div className="risk-student-table"><Table><TableHeader><TableRow><TableHead>Оқушы</TableHead><TableHead>Ағым</TableHead><TableHead>Куратор</TableHead><TableHead>Нәтиже</TableHead><TableHead><span className="sr-only">Әрекет</span></TableHead></TableRow></TableHeader><TableBody>{selectedRiskStudents.map((student, index) => { const group = groups.find((item) => item.id === student.sourceGroup) || groups.find((item) => item.name === student.curator && item.stream.endsWith(student.stream === 'Тамыз' ? 'aug' : 'sep')); const lastEntry = referrals.find((entry) => entry.title === student.name && entry.groupId === group?.id && entry.method.startsWith(riskSpecialist + ' · ')); return <TableRow key={`${student.name}-${student.curator}-${index}`}><TableCell>{student.name}</TableCell><TableCell>{student.stream}</TableCell><TableCell>{student.curator}</TableCell><TableCell>{lastEntry ? <span className={'status status-' + lastEntry.status}>{conversationStatuses.find((item) => item.value === lastEntry.status)?.label}</span> : <span className="muted">Сөйлеспеді</span>}</TableCell><TableCell><button className="referral-button" disabled={!group} onClick={() => { if (!group) return; setGroupId(group.id); setReferralStudentId(''); setRiskConversation(student); setReferralTarget(`${riskSpecialist} · ${specialists.find(([name]) => name === riskSpecialist)?.[1] || ''}`); setStatus(lastEntry?.status || 'contact'); setModal('referral'); }}>{lastEntry ? 'Нәтижені өзгерту' : 'Сөйлесу нәтижесі'}</button></TableCell></TableRow>})}</TableBody></Table></div>
+              <div className="risk-student-table"><Table><TableHeader><TableRow><TableHead>Оқушы</TableHead><TableHead>Ағым</TableHead><TableHead>Куратор</TableHead><TableHead>Нәтиже</TableHead><TableHead><span className="sr-only">Әрекет</span></TableHead></TableRow></TableHeader><TableBody>{selectedRiskStudents.map((student, index) => { const group = groups.find((item) => item.name === student.curator && item.stream.endsWith(student.stream === 'Тамыз' ? 'aug' : 'sep')); const lastEntry = referrals.find((entry) => entry.title === student.name && entry.groupId === group?.id && entry.method.startsWith(riskSpecialist + ' · ')); return <TableRow key={`${student.name}-${student.curator}-${index}`}><TableCell>{student.name}</TableCell><TableCell>{student.stream}</TableCell><TableCell>{student.curator}</TableCell><TableCell>{lastEntry ? <span className={'status status-' + lastEntry.status}>{conversationStatuses.find((item) => item.value === lastEntry.status)?.label}</span> : <span className="muted">Сөйлеспеді</span>}</TableCell><TableCell><button className="referral-button" disabled={!group} onClick={() => { if (!group) return; setGroupId(group.id); setReferralStudentId(''); setRiskConversation(student); setReferralTarget(`${riskSpecialist} · ${specialists.find(([name]) => name === riskSpecialist)?.[1] || ''}`); setStatus(lastEntry?.status || 'contact'); setModal('referral'); }}>{lastEntry ? 'Нәтижені өзгерту' : 'Сөйлесу нәтижесі'}</button></TableCell></TableRow>})}</TableBody></Table></div>
             </section>
           </>
         )}
