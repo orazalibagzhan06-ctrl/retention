@@ -138,7 +138,7 @@ async function api(url: string, init?: RequestInit) {
   return b;
 }
 export default function Home({ viewer }: { viewer: Curator }) {
-  const [view, setView] = useState(viewer.role === 'admin' ? 'overview' : viewer.role === 'specialist' ? 'referrals' : 'cases'),
+  const [view, setView] = useState(viewer.role === 'specialist' ? 'referrals' : 'overview'),
     [stream, setStream] = useState('all'),
     [query, setQuery] = useState(''),
     [studentQuery, setStudentQuery] = useState(''),
@@ -434,7 +434,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
                 ? [['overview', 'Жалпы шолу'], ['curators', 'Кураторлар'], ['students', 'Оқушылар'], ['cases', 'Оқушымен жұмыс'], ['ranking', 'Рейтинг'], ['referrals', 'Жеке сөйлесу']]
                 : viewer.role === 'specialist'
                   ? [['referrals', 'Жеке сөйлесу']]
-                  : [['cases', 'Оқушымен жұмыс'], ['ranking', 'Рейтинг'], ['referrals', 'Жеке сөйлесу']]
+                  : [['overview', 'Төлем'], ['cases', 'Оқушымен жұмыс'], ['ranking', 'Рейтинг'], ['referrals', 'Жеке сөйлесу']]
               ).map(([v, l]) => (
                 <TabsTrigger key={v} value={v}>
                   {l}
