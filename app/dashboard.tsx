@@ -396,6 +396,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
     } catch {}
     return () => abort.abort();
   }, []);
+  const logout = async () => { await fetch('/api/logout', { method: 'POST' }); window.location.assign('/login'); };
   const showDetail = (e: Entry) => {
     setDetail(e);
     setStatus(e.status);
@@ -413,7 +414,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
             <small>Кураторлар жұмыс кеңістігі</small>
           </div>
         </a>
-        <span className="semester">SMART · 11 СЫНЫП · 2027</span>
+        <div className="topbar-actions"><span className="semester">SMART · 11 СЫНЫП · 2027</span><button className="logout-button" onClick={() => void logout()}>Шығу</button></div>
       </header>
       <section className="page">
         <div className="eyebrow">МАТЕМАТИКАЛЫҚ САУАТТЫЛЫҚ</div>
