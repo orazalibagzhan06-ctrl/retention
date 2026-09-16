@@ -128,6 +128,9 @@ const rrPlan = [
     ['Айлық/қорытынды тестте 50%-дан төмен алмау', 'Ешбір оқушысы 50%-дан төмен алмаған кураторды марапаттау', 'Әр ай', 'Толық команда'],
     ['Қорытынды тестте 50%-дан төмен оқушыларға қосымша қолдау', 'Барлығын топқа жинап, қайталау жоспарын құрып, қосымша сабақ өткізу', 'Әр ай', 'Толық команда'],
   ]},
+ ] as const;
+const groupSchedule = [
+  ['17.09, бейсенбі', 2, 4], ['18.09, жұма', 1, 4], ['21.09, дүйсенбі', 2, 3], ['22.09, сейсенбі', 1, 3], ['23.09, сәрсенбі', 2, 3], ['24.09, бейсенбі', 1, 3], ['25.09, жұма', 2, 3], ['28.09, дүйсенбі', 1, 3], ['29.09, сейсенбі', 1, 3], ['30.09, сәрсенбі', 1, 3],
 ] as const;
 function Picker({
   value,
@@ -976,6 +979,10 @@ export default function Home({ viewer }: { viewer: Curator }) {
             </div>
             <section className="rr-plan" aria-label="RR 91 пайыз жоспары">
               <div className="rr-goal"><span>RR МАҚСАТЫ</span><strong>91%+</strong><p>Әр қызметкер дедлайнмен танысып, өзіне тиесілі жұмысты уақытында орындауы қажет.</p></div>
+              <section className="group-schedule" aria-label="Ортақ топ жүргізу кестесі">
+                <div><span>ОРТАҚ ТОП ЖҮРГІЗУ</span><h3>17–30 қыркүйек кестесі</h3><p>Сенбі мен жексенбі есепке алынбаған. 14 тамыз және 32 қыркүйек кураторы жұмыс күндеріне тең бөлінді.</p></div>
+                <div className="schedule-table"><div className="schedule-head"><span>Күні</span><span>Тамыз</span><span>Қыркүйек</span><span>Барлығы</span></div>{groupSchedule.map(([date, august, september]) => <div className="schedule-row" key={date}><span>{date}</span><span>{august} куратор</span><span>{september} куратор</span><b>{august + september} куратор</b></div>)}<div className="schedule-total"><span>Жалпы</span><b>14 куратор</b><b>32 куратор</b><b>46 куратор</b></div></div>
+              </section>
               {rrPlan.map((block) => (
                 <details key={block.section} className="rr-plan-block" open>
                   <summary>{block.section} <span>{block.tasks.length} жұмыс</span></summary>
