@@ -995,7 +995,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
               <div className="panel-heading"><div><span className="risk-kicker">ЖЕКЕ СӨЙЛЕСУ НӘТИЖЕСІ</span><h2>9 басшының көрсеткіші</h2><p>Мақсат — әр қызметкер 50 оқушымен сөйлесіп, нәтижесін тіркейді.</p></div><b className="chart-goal">Шек: 50 оқушы</b></div>
               <div className="chart-scale"><span>50</span><span>25</span><span>0</span></div>
               <div className="specialist-bars">
-                {specialistProgress.map((item) => <div className="specialist-bar-item" key={item.name}><div className="specialist-bar-track"><div className="specialist-bar-fill" style={{height: `${Math.min(item.count, 50) / 50 * 100}%`}}><b>{item.count || ''}</b></div></div><strong>{item.name.split(' ')[0]}</strong><span>{item.count} / 50</span></div>)}
+                {specialistProgress.map((item) => <div className="specialist-bar-item" key={item.name}><div className="specialist-bar-track"><div className="specialist-bar-fill" style={{height: `${Math.min(item.count, 50) / 50 * 100}%`}}><b>{item.count || ''}</b></div></div><strong>{item.name}</strong><span>{item.count} / 50</span></div>)}
               </div>
             </section>
             <section className="panel risk-roster" id="risk-student-list">
