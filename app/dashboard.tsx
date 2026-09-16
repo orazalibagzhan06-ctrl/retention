@@ -207,6 +207,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
     [query, setQuery] = useState(''),
     [studentQuery, setStudentQuery] = useState(''),
     [studentPaymentFilter, setStudentPaymentFilter] = useState('all'),
+    [studentPage, setStudentPage] = useState(1),
     [groups, setGroups] = useState<Group[]>(baseline),
     [entries, setEntries] = useState<Entry[]>([]),
     [user, setUser] = useState<{ id: string; name: string } | null>(null),
@@ -287,6 +288,16 @@ export default function Home({ viewer }: { viewer: Curator }) {
       ),
     [selected, stream, studentQuery, studentPaymentFilter],
   );
+  const studentPageSize = 50;
+  const studentPageCount = Math.max(1, Math.ceil(visibleStudents.length / studentPageSize));
+  const currentStudentPage = Math.min(studentPage, studentPageCount);
+  const pagedStudents = useMemo(
+    () => visibleStudents.slice((currentStudentPage - 1) * studentPageSize, currentStudentPage * studentPageSize),
+    [visibleStudents, currentStudentPage],
+  );
+  useEffect(() => {
+    setStudentPage(1);
+  }, [stream, studentQuery, studentPaymentFilter]);
   const curatorStudents = useMemo(
     () =>
       curatorDetail
@@ -971,7 +982,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
             <section className="panel risk-roster" id="risk-student-list">
               <div className="panel-heading"><div><span className="risk-kicker">ТӘУЕКЕЛ ОҚУШЫЛАРЫ · {riskStudents.length}</span><h2>Оқушылар тізімі</h2><p>Excel тізімінен: тамыз және қыркүйек оқушылары</p></div></div>
               <div className="risk-caption"><b>{riskSpecialist}</b><span>{selectedRiskStudents.length} оқушы · Тамыз {selectedRiskStudents.filter((student) => student.stream === 'Тамыз').length} · Қыркүйек {selectedRiskStudents.filter((student) => student.stream === 'Қыркүйек').length}</span></div>
-              <div className="risk-student-scroll"><Table><TableHeader><TableRow><TableHead>Оқушы</TableHead><TableHead>Ағым</TableHead><TableHead>Куратор</TableHead></TableRow></TableHeader><TableBody>{selectedRiskStudents.map((student, index) => <TableRow key={`${student.name}-${index}`}><TableCell>{student.name}</TableCell><TableCell>{student.stream}</TableCell><TableCell>{student.curator}</TableCell></TableRow>)}</TableBody></Table></div>
+              <div className="risk-student-table"><Table><TableHeader><TableRow><TableHead>Оқушы</TableHead><TableHead>Ағым</TableHead><TableHead>Куратор</TableHead></TableRow></TableHeader><TableBody>{selectedRiskStudents.map((student, index) => <TableRow key={`${student.name}-${index}`}><TableCell>{student.name}</TableCell><TableCell>{student.stream}</TableCell><TableCell>{student.curator}</TableCell></TableRow>)}</TableBody></Table></div>
             </section>
             <section className="panel referrals-panel">
               <div className="panel-heading">
@@ -1179,7 +1190,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
               </p>
             </div>
             <section className="panel student-table">
-              <p className="table-scroll-hint">Кестені көру үшін төмен-жоғары, қажет болса солға-оңға жылжытыңыз.</p>
+              <div className="table-intro">Барлық оқушыны көру үшін төменге қарай жылжытыңыз. Әр бетте 50 оқушы көрсетіледі.</div>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -1190,7 +1201,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {visibleStudents.map((student) => (
+                  {pagedStudents.map((student) => (
                     <TableRow key={student.id}>
                       <TableCell>
                         <div className="person">
@@ -1216,6 +1227,16 @@ export default function Home({ viewer }: { viewer: Curator }) {
               </Table>
               {!visibleStudents.length && (
                 <div className="compact-empty">Іздеу бойынша оқушы табылмады.</div>
+              )}
+              {visibleStudents.length > 0 && (
+                <div className="table-pagination">
+                  <span>{num(visibleStudents.length)} оқушының {(currentStudentPage - 1) * studentPageSize + 1}–{Math.min(currentStudentPage * studentPageSize, visibleStudents.length)}-і</span>
+                  <div>
+                    <button type="button" onClick={() => setStudentPage((page) => Math.max(1, page - 1))} disabled={currentStudentPage === 1}>← Алдыңғы</button>
+                    <b>{currentStudentPage} / {studentPageCount}</b>
+                    <button type="button" onClick={() => setStudentPage((page) => Math.min(studentPageCount, page + 1))} disabled={currentStudentPage === studentPageCount}>Келесі →</button>
+                  </div>
+                </div>
               )}
             </section>
           </>
