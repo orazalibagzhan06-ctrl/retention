@@ -427,8 +427,14 @@ export default function Home({ viewer }: { viewer: Curator }) {
         fd.set('kind', modal!);
         await api('/api/entries', { method: 'POST', body: fd });
       }
+      if (modal === 'referral' && riskConversation) {
+        setRiskSpecialist(riskConversation.specialist);
+        setView('referrals');
+        setRiskConversation(null);
+        setReferralStudentId('');
+      }
       setModal(null);
-      setNotice('Сәтті сақталды');
+      setNotice('Сөйлесу нәтижесі сақталды');
       await refresh();
     } catch (e) {
       setFormError((e as Error).message);
@@ -1404,7 +1410,10 @@ export default function Home({ viewer }: { viewer: Curator }) {
                     label="Оқушыны таңдаңыз"
                   />
                 </label><input type="hidden" name="title" value={referralCandidates.find((student) => student.id === referralStudentId)?.name || ''} /></>}
-                <label>
+                {riskConversation ? <label>
+                  Жауапты басшы
+                  <input value={referralTarget} readOnly />
+                </label> : <label>
                   Таңдалған маман
                   <Picker
                     value={referralTarget}
@@ -1418,7 +1427,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
                     ]}
                     label="Таңдалған маман"
                   />
-                </label>
+                </label>}
                 <input type="hidden" name="method" value={referralTarget} />
                 <label>
                   Пікір / сөйлесу қорытындысы
