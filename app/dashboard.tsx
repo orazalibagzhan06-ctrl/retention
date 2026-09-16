@@ -60,6 +60,7 @@ import {
   type Entry,
 } from '@/lib/data';
 import { students } from '@/lib/students';
+import type { Curator } from '@/lib/curator-auth';
 const num = (v: number) => new Intl.NumberFormat('kk-KZ').format(v);
 const pct = (v: number | null) =>
   v === null
@@ -136,8 +137,8 @@ async function api(url: string, init?: RequestInit) {
   if (!r.ok) throw new Error(b.error || 'Сұрау орындалмады.');
   return b;
 }
-export default function Home() {
-  const [view, setView] = useState('overview'),
+export default function Home({ viewer }: { viewer: Curator }) {
+  const [view, setView] = useState(viewer.role === 'admin' ? 'overview' : viewer.role === 'specialist' ? 'referrals' : 'cases'),
     [stream, setStream] = useState('all'),
     [query, setQuery] = useState(''),
     [studentQuery, setStudentQuery] = useState(''),
@@ -180,13 +181,19 @@ export default function Home() {
     const t = setTimeout(() => setNotice(''), 5000);
     return () => clearTimeout(t);
   }, [notice]);
+  const isAdmin = viewer.role === 'admin';
+  const isCurator = viewer.role === 'curator';
+  const allowedGroups = useMemo(
+    () => isAdmin ? groups : isCurator ? groups.filter((g) => g.stream.endsWith(`-${viewer.month}`)) : groups,
+    [groups, isAdmin, isCurator, viewer.month],
+  );
   const selected = useMemo(
-    () => groups.filter((g) => stream === 'all' || g.stream === stream),
-    [groups, stream],
+    () => allowedGroups.filter((g) => stream === 'all' || g.stream === stream),
+    [allowedGroups, stream],
   );
   const activeStreams = useMemo(
-    () => streams.filter((s) => groups.some((g) => g.stream === s.id)),
-    [groups],
+    () => streams.filter((s) => allowedGroups.some((g) => g.stream === s.id)),
+    [allowedGroups],
   );
   const summary = summarize(selected);
   const visible = selected.filter((g) =>
@@ -203,6 +210,7 @@ export default function Home() {
     () =>
       students.filter(
         (student) =>
+          selected.some((group) => group.id === student.groupId) &&
           (stream === 'all' || student.stream === stream) &&
           (studentPaymentFilter === 'all' ||
             student.paymentState === studentPaymentFilter) &&
@@ -210,7 +218,7 @@ export default function Home() {
             .toLocaleLowerCase()
             .includes(studentQuery.toLocaleLowerCase()),
       ),
-    [stream, studentQuery, studentPaymentFilter],
+    [selected, stream, studentQuery, studentPaymentFilter],
   );
   const curatorStudents = useMemo(
     () =>
@@ -414,21 +422,19 @@ export default function Home() {
             <h1>Әр оқушы маңызды.</h1>
             <p>Ағымдар нәтижесі және кураторлар жұмысы</p>
           </div>
-          <button className="action" onClick={() => open('case')}>
+          {viewer.role !== 'specialist' && <button className="action" onClick={() => open('case')}>
             <Plus size={18} /> Жұмыс қосу
-          </button>
+          </button>}
         </div>
         <div className="navigation">
           <Tabs value={view} onValueChange={(v) => setView(String(v))}>
             <TabsList className="main-tabs">
-              {[
-                ['overview', 'Жалпы шолу'],
-                ['curators', 'Кураторлар'],
-                ['students', 'Оқушылар'],
-                ['cases', 'Оқушымен жұмыс'],
-                ['ranking', 'Рейтинг'],
-                ['referrals', 'Жеке сөйлесу'],
-              ].map(([v, l]) => (
+              {(viewer.role === 'admin'
+                ? [['overview', 'Жалпы шолу'], ['curators', 'Кураторлар'], ['students', 'Оқушылар'], ['cases', 'Оқушымен жұмыс'], ['ranking', 'Рейтинг'], ['referrals', 'Жеке сөйлесу']]
+                : viewer.role === 'specialist'
+                  ? [['referrals', 'Жеке сөйлесу']]
+                  : [['cases', 'Оқушымен жұмыс'], ['ranking', 'Рейтинг'], ['referrals', 'Жеке сөйлесу']]
+              ).map(([v, l]) => (
                 <TabsTrigger key={v} value={v}>
                   {l}
                 </TabsTrigger>
