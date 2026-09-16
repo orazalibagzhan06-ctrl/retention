@@ -51,7 +51,7 @@ def main():
     students = load_ts_json(STUDENTS_FILE, 'export const students: Student[] = ')
     groups = load_ts_json(GROUPS_FILE, 'export const currentGroups = ')
     frozen_ids = {student['id'] for student in students}
-    if len(students) != 3999 or len(frozen_ids) != 3999:
+    if len(students) != 3998 or len(frozen_ids) != 3998:
         raise SystemExit(f'Frozen roster check failed: {len(students)} rows, {len(frozen_ids)} unique IDs.')
 
     login = request_json('/v1/auth/signin', body={'username': username, 'password': password})

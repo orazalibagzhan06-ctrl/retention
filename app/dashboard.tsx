@@ -1191,7 +1191,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
         <footer>
           <span>МС Retention · 2026–2027</span>
           <span>
-            JUZ40 көшірмесі: 16.09.2026 · 3 999 оқушы бекітілген · Төлем мәртебесі күн сайын жаңартылады
+            JUZ40 көшірмесі: 16.09.2026 · 3 998 оқушы бекітілген · Төлем мәртебесі күн сайын жаңартылады
           </span>
         </footer>
       </section>
