@@ -130,7 +130,16 @@ const rrPlan = [
   ]},
  ] as const;
 const groupSchedule = [
-  ['17.09, бейсенбі', 2, 4], ['18.09, жұма', 1, 4], ['21.09, дүйсенбі', 2, 3], ['22.09, сейсенбі', 1, 3], ['23.09, сәрсенбі', 2, 3], ['24.09, бейсенбі', 1, 3], ['25.09, жұма', 2, 3], ['28.09, дүйсенбі', 1, 3], ['29.09, сейсенбі', 1, 3], ['30.09, сәрсенбі', 1, 3],
+  ['17.09, бейсенбі', 'Оразәлі Бағжан · координатор', 'Кеңшілік Айым · координатор'],
+  ['18.09, жұма', '—', 'Болат Бекжан'],
+  ['21.09, дүйсенбі', 'Нұрлы Қайрғалиева · Еркеназ Әмзебекова', 'Шұғыла Амангелді · Эльназ Ермек · Роза Жүніс · Ақбота Құдайберген'],
+  ['22.09, сейсенбі', 'Лэйла Ерсайнова · Ақбота Ғазиз', 'Аида Марбек · Шырын Нұрланқызы · Ақниет Серікбай · Молдир Скакова'],
+  ['23.09, сәрсенбі', 'Асем Сейтимова · Алихан Жаумитов', 'Нұртас Жантас · Меруерт Асембаева · Эльнура Ыгышова · Назерке Нұрболқызы'],
+  ['24.09, бейсенбі', 'Іңкәр Жәрдемхан · Адина Мұраталы', 'Жазира Тагайбекова · Жаннұр Шакизада · Ақүрпек Тұрсынқұл · Мухамед Гулмира'],
+  ['25.09, жұма', 'Тамирлан Баяхмет · Мөлдір Дәлубайқызы', 'Ерасыл Жанболат · Балнұр Мырзабек · Арайлым Әбушахман · Талғат Аружан'],
+  ['28.09, дүйсенбі', 'Жібек Қуат · Бақберген Амангелді', 'Айзере Сағатқызы · Айым Нұртулеу · Әсемай Әбдіжамил · Жұмабек Раушан'],
+  ['29.09, сейсенбі', 'Аяулым Серік', 'Анель Жоламан · Сабыров Абылай · Зере Мұратбай · Нұрдос Ырысбек'],
+  ['30.09, сәрсенбі', 'Іңкәр Шохан', 'Ақнұр Нүсіп · Зарина Мукашева · Қырықпа Інжу'],
 ] as const;
 const tiktokSchedule = [
   ['17.09, бейсенбі', 'Шұғыла Амангелді · Бағжан Болат · Эльназ Ермек · Роза Жүніс · Ақбота Құдайберген'],
@@ -1002,8 +1011,8 @@ export default function Home({ viewer }: { viewer: Curator }) {
             <section className="rr-plan" aria-label="RR 91 пайыз жоспары">
               <div className="rr-goal"><span>RR МАҚСАТЫ</span><strong>91%+</strong><p>Әр қызметкер дедлайнмен танысып, өзіне тиесілі жұмысты уақытында орындауы қажет.</p></div>
               <section className="group-schedule" aria-label="Ортақ топ жүргізу кестесі">
-                <div><span>ОРТАҚ ТОП ЖҮРГІЗУ</span><h3>17–30 қыркүйек кестесі</h3><p>Сенбі мен жексенбі есепке алынбаған. 14 тамыз және 32 қыркүйек кураторы жұмыс күндеріне тең бөлінді.</p></div>
-                <div className="schedule-table"><div className="schedule-head"><span>Күні</span><span>Тамыз</span><span>Қыркүйек</span><span>Барлығы</span></div>{groupSchedule.map(([date, august, september]) => <div className="schedule-row" key={date}><span>{date}</span><span>{august} куратор <PlanCheck value={planStatus[`${date}-aug`]} onChange={(value) => void setPlanCheck(date, 'aug', value)} disabled={viewer.role === 'specialist' || (viewer.role === 'curator' && viewer.month !== 'aug')} /></span><span>{september} куратор <PlanCheck value={planStatus[`${date}-sep`]} onChange={(value) => void setPlanCheck(date, 'sep', value)} disabled={viewer.role === 'specialist' || (viewer.role === 'curator' && viewer.month !== 'sep')} /></span><b>{august + september} куратор</b></div>)}<div className="schedule-total"><span>Жалпы</span><b>14 куратор</b><b>32 куратор</b><b>46 куратор</b></div></div>
+                <div><span>ОРТАҚ ТОП ЖҮРГІЗУ</span><h3>17–30 қыркүйек кестесі</h3><p>17-сі координаторлардан басталады. Әрі қарай тамыз бен қыркүйек кураторлары нақты есімдерімен бөлінді.</p></div>
+                <div className="schedule-table"><div className="schedule-head"><span>Күні</span><span>Тамыз</span><span>Қыркүйек</span></div>{groupSchedule.map(([date, august, september]) => <div className="schedule-row tiktok-row" key={date}><span>{date}</span><span>{august}<PlanCheck value={planStatus[`${date}-aug`]} onChange={(value) => void setPlanCheck(date, 'aug', value)} disabled={viewer.role === 'specialist' || (viewer.role === 'curator' && viewer.month !== 'aug')} /></span><span>{september}<PlanCheck value={planStatus[`${date}-sep`]} onChange={(value) => void setPlanCheck(date, 'sep', value)} disabled={viewer.role === 'specialist' || (viewer.role === 'curator' && viewer.month !== 'sep')} /></span></div>)}<div className="schedule-total"><span>Жалпы</span><b>14 тамыз кураторы</b><b>32 қыркүйек кураторы</b></div></div>
               </section>
               <section className="group-schedule" aria-label="TikTok жүргізу кестесі">
                 <div><span>TIKTOK ЖҮРГІЗУ</span><h3>17–30 қыркүйек кестесі</h3><p>55 куратор күндерге тең бөлінді. Жексенбі — демалыс: 20 және 27 қыркүйек кестеде жоқ.</p></div>
