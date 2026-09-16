@@ -4,7 +4,7 @@ import {baseline} from '@/lib/data';
 export function database(){return env.DB}
 export function files(){return env.FILES}
 export async function identity(){const user=await curatorUser(); if(!user)throw new Error('AUTH');return user}
-export function allowedGroups(user:Awaited<ReturnType<typeof identity>>){return user.role==='admin'||user.role==='specialist'?baseline:baseline.filter(group=>group.stream.endsWith(`-${user.month}`))}
+export function allowedGroups(user:Awaited<ReturnType<typeof identity>>){return user.role==='admin'||user.role==='specialist'||user.role==='conversation'?baseline:baseline.filter(group=>group.stream.endsWith(`-${user.month}`))}
 export function canAccessGroup(user:Awaited<ReturnType<typeof identity>>,groupId:string){return allowedGroups(user).some(group=>group.id===groupId)}
 export function fail(error:unknown){if(error instanceof Error&&error.message==='AUTH')return Response.json({error:'Сайтқа кіру қажет.'},{status:401}); console.error('Request failed',error instanceof Error?error.message:'unknown');return Response.json({error:'Сақтау сәтсіз аяқталды. Қайта көріңіз.'},{status:500})}
 export function sameOrigin(req:Request){

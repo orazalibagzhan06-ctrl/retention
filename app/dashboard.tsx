@@ -209,7 +209,7 @@ async function api(url: string, init?: RequestInit) {
   return b;
 }
 export default function Home({ viewer }: { viewer: Curator }) {
-  const [view, setView] = useState(viewer.role === 'specialist' ? 'referrals' : 'overview'),
+  const [view, setView] = useState(viewer.role === 'specialist' || viewer.role === 'conversation' ? 'referrals' : 'overview'),
     [stream, setStream] = useState('all'),
     [query, setQuery] = useState(''),
     [studentQuery, setStudentQuery] = useState(''),
@@ -259,6 +259,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
   }, [notice]);
   const isAdmin = viewer.role === 'admin';
   const isCurator = viewer.role === 'curator';
+  const isConversation = viewer.role === 'conversation';
   const allowedGroups = useMemo(
     () => isAdmin ? groups : isCurator ? groups.filter((g) => g.stream.endsWith(`-${viewer.month}`)) : groups,
     [groups, isAdmin, isCurator, viewer.month],
@@ -522,7 +523,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
             <h1>Әр оқушы маңызды.</h1>
             <p>Ағымдар нәтижесі және кураторлар жұмысы</p>
           </div>
-          {viewer.role !== 'specialist' && <button className="action" onClick={() => open('case')}>
+          {viewer.role !== 'specialist' && !isConversation && <button className="action" onClick={() => open('case')}>
             <Plus size={18} /> Жұмыс қосу
           </button>}
         </div>
@@ -533,6 +534,8 @@ export default function Home({ viewer }: { viewer: Curator }) {
                 ? [['overview', 'Жалпы шолу'], ['curators', 'Кураторлар'], ['students', 'Оқушылар'], ['cases', 'RR көтеру план'], ['ranking', 'Рейтинг'], ['referrals', 'Жеке сөйлесу']]
                 : viewer.role === 'specialist'
                   ? [['referrals', 'Жеке сөйлесу']]
+                  : viewer.role === 'conversation'
+                    ? [['overview', 'Төлем және RR'], ['cases', 'RR көтеру план'], ['referrals', 'Жеке сөйлесу']]
                   : [['overview', 'Төлем'], ['cases', 'RR көтеру план'], ['ranking', 'Рейтинг'], ['referrals', 'Жеке сөйлесу']]
               ).map(([v, l]) => (
                 <TabsTrigger key={v} value={v}>
@@ -1048,7 +1051,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
               <div className="rr-goal"><span>RR МАҚСАТЫ</span><strong>91%+</strong><p>Әр қызметкер дедлайнмен танысып, өзіне тиесілі жұмысты уақытында орындауы қажет.</p></div>
               <section className="group-schedule" aria-label="Ортақ топ жүргізу кестесі">
                 <div><span>ОРТАҚ ТОП ЖҮРГІЗУ</span><h3>17–30 қыркүйек кестесі</h3><p>17-сі координаторлардан басталады. Әрі қарай тамыз бен қыркүйек кураторлары нақты есімдерімен бөлінді.</p></div>
-                <div className="team-schedule-grid">{groupSchedule.map(([date, august, september]) => <article className="team-schedule-day" key={date}><h4>{date}</h4><div className="team-schedule-columns"><section><span>ТАМЫЗ</span><p>{august}</p><PlanCheck value={planStatus[`${date}-aug`]} onChange={(value) => void setPlanCheck(date, 'aug', value)} disabled={viewer.role === 'specialist' || (viewer.role === 'curator' && viewer.month !== 'aug')} /></section><section><span>ҚЫРКҮЙЕК</span><p>{september}</p><PlanCheck value={planStatus[`${date}-sep`]} onChange={(value) => void setPlanCheck(date, 'sep', value)} disabled={viewer.role === 'specialist' || (viewer.role === 'curator' && viewer.month !== 'sep')} /></section></div></article>)}</div>
+                <div className="team-schedule-grid">{groupSchedule.map(([date, august, september]) => <article className="team-schedule-day" key={date}><h4>{date}</h4><div className="team-schedule-columns"><section><span>ТАМЫЗ</span><p>{august}</p><PlanCheck value={planStatus[`${date}-aug`]} onChange={(value) => void setPlanCheck(date, 'aug', value)} disabled={viewer.role === 'specialist' || isConversation || (viewer.role === 'curator' && viewer.month !== 'aug')} /></section><section><span>ҚЫРКҮЙЕК</span><p>{september}</p><PlanCheck value={planStatus[`${date}-sep`]} onChange={(value) => void setPlanCheck(date, 'sep', value)} disabled={viewer.role === 'specialist' || isConversation || (viewer.role === 'curator' && viewer.month !== 'sep')} /></section></div></article>)}</div>
                 <div className="team-schedule-total"><b>Тамыз: 14 куратор</b><b>Қыркүйек: 32 куратор</b></div>
               </section>
               <section className="group-schedule" aria-label="TikTok жүргізу кестесі">
@@ -1061,7 +1064,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
                   <div className="rr-plan-list">
                     {block.tasks.map(([title, description, deadline, owner], index) => {
                       const taskId = `task-${block.section.slice(0, 1)}-${index}`;
-                      return <article key={title} className="rr-plan-item"><div><h3>{title}</h3><p>{description}</p></div><div className="rr-plan-meta"><b>Дедлайн</b><span>{deadline}</span><b>Жауапты</b><span>{owner}</span><b>Мәртебе</b><PlanCheck value={planStatus[`${taskId}-task`]} onChange={(value) => void setPlanCheck(taskId, 'task', value)} disabled={viewer.role === 'specialist'} /></div></article>;
+                      return <article key={title} className="rr-plan-item"><div><h3>{title}</h3><p>{description}</p></div><div className="rr-plan-meta"><b>Дедлайн</b><span>{deadline}</span><b>Жауапты</b><span>{owner}</span><b>Мәртебе</b><PlanCheck value={planStatus[`${taskId}-task`]} onChange={(value) => void setPlanCheck(taskId, 'task', value)} disabled={viewer.role === 'specialist' || isConversation} /></div></article>;
                     })}
                   </div>
                 </details>
