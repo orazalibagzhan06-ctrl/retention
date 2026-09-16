@@ -438,7 +438,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
     return () => abort.abort();
   }, []);
   const logout = async () => { await fetch('/api/logout', { method: 'POST' }); window.location.assign('/login'); };
-  const setPlanCheck = async (date: string, month: 'aug' | 'sep', value: 'done' | 'not_done') => {
+  const setPlanCheck = async (date: string, month: 'aug' | 'sep' | 'task', value: 'done' | 'not_done') => {
     const response = await fetch('/api/plan-status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date, month, status: value }) });
     if (!response.ok) { setNotice('Бұл белгіні өзгертуге рұқсат жоқ'); return; }
     setPlanStatus((current) => ({ ...current, [`${date}-${month}`]: value }));
@@ -995,9 +995,10 @@ export default function Home({ viewer }: { viewer: Curator }) {
                 <details key={block.section} className="rr-plan-block" open>
                   <summary>{block.section} <span>{block.tasks.length} жұмыс</span></summary>
                   <div className="rr-plan-list">
-                    {block.tasks.map(([title, description, deadline, owner]) => (
-                      <article key={title} className="rr-plan-item"><div><h3>{title}</h3><p>{description}</p></div><div className="rr-plan-meta"><b>Дедлайн</b><span>{deadline}</span><b>Жауапты</b><span>{owner}</span></div></article>
-                    ))}
+                    {block.tasks.map(([title, description, deadline, owner], index) => {
+                      const taskId = `task-${block.section.slice(0, 1)}-${index}`;
+                      return <article key={title} className="rr-plan-item"><div><h3>{title}</h3><p>{description}</p></div><div className="rr-plan-meta"><b>Дедлайн</b><span>{deadline}</span><b>Жауапты</b><span>{owner}</span><b>Мәртебе</b><PlanCheck value={planStatus[`${taskId}-task`]} onChange={(value) => void setPlanCheck(taskId, 'task', value)} disabled={viewer.role === 'specialist'} /></div></article>;
+                    })}
                   </div>
                 </details>
               ))}
