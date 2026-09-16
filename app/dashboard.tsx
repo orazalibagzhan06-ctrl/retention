@@ -1324,7 +1324,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={submit} className="entry-form">
-            <label>
+            {modal !== 'referral' && <label>
               Куратор және ағым
               <Picker
                 value={groupId}
@@ -1335,7 +1335,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
                 }))}
                 label="Куратор және ағым"
               />
-            </label>
+            </label>}
             {modal === 'metric' ? (
               <div key={groupId} className="metric-fields">
                 <div className="two-fields">
