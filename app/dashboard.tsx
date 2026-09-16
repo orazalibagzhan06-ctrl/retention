@@ -192,7 +192,8 @@ function Picker({
 }
 async function api(url: string, init?: RequestInit) {
   const r = await fetch(url, init);
-  const b = (await r.json()) as {
+  const text = await r.text();
+  const b = (text ? JSON.parse(text) : {}) as {
     error?: string;
     groups: Group[];
     entries: Entry[];
