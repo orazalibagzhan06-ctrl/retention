@@ -957,27 +957,19 @@ export default function Home({ viewer }: { viewer: Curator }) {
             </div>
             <div className="specialist-grid">
               {specialists.map(([name, role]) => (
-                <article className="specialist-card" key={name}>
+                <article className="specialist-card" data-active={riskSpecialist === name} key={name}>
                   <span className="avatar">{initials(name)}</span>
-                  <div>
+                  <div className="specialist-info">
                     <h3>{name}</h3>
                     <p>{role}</p>
+                    <span>Тәуекел тізімі · <b>{riskCount(name)} оқушы</b></span>
                   </div>
-                  <button
-                    className="secondary-button"
-                    onClick={() => {
-                      open('referral');
-                      setReferralTarget(`${name} · ${role}`);
-                    }}
-                  >
-                    Оқушы ұсыну
-                  </button>
-                  <button className="risk-list-button" onClick={() => setRiskSpecialist(name)}>Тізім · {riskCount(name)}</button>
+                  <div className="specialist-actions"><button className="risk-list-button" onClick={() => { setRiskSpecialist(name); requestAnimationFrame(() => document.getElementById('risk-student-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); }}>Тізімді ашу</button><button className="secondary-button" onClick={() => { open('referral'); setReferralTarget(`${name} · ${role}`); }}>Ұсыну</button></div>
                 </article>
               ))}
             </div>
-            <section className="panel risk-roster">
-              <div className="panel-heading"><div><h2>Тәуекел оқушылары</h2><p>Excel тізімінен тек тамыз және қыркүйек: 247 оқушы</p></div><div className="risk-tabs">{specialists.map(([name]) => <button key={name} data-active={riskSpecialist === name} onClick={() => setRiskSpecialist(name)}>{name.split(' ').slice(0, 2).join(' ')} · {riskCount(name)}</button>)}</div></div>
+            <section className="panel risk-roster" id="risk-student-list">
+              <div className="panel-heading"><div><span className="risk-kicker">ТӘУЕКЕЛ ОҚУШЫЛАРЫ · 247</span><h2>Оқушылар тізімі</h2><p>Excel тізімінен: тамыз және қыркүйек оқушылары</p></div></div>
               <div className="risk-caption"><b>{riskSpecialist}</b><span>{selectedRiskStudents.length} оқушы · Тамыз {selectedRiskStudents.filter((student) => student.stream === 'Тамыз').length} · Қыркүйек {selectedRiskStudents.filter((student) => student.stream === 'Қыркүйек').length}</span></div>
               <Table><TableHeader><TableRow><TableHead>Оқушы</TableHead><TableHead>Ағым</TableHead><TableHead>Куратор</TableHead></TableRow></TableHeader><TableBody>{selectedRiskStudents.map((student, index) => <TableRow key={`${student.name}-${index}`}><TableCell>{student.name}</TableCell><TableCell>{student.stream}</TableCell><TableCell>{student.curator}</TableCell></TableRow>)}</TableBody></Table>
             </section>
