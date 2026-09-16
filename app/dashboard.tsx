@@ -230,6 +230,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
     [curatorDetail, setCuratorDetail] = useState<Group | null>(null),
     [referralTarget, setReferralTarget] = useState(''),
     [referralStudentId, setReferralStudentId] = useState(''),
+    [riskConversation, setRiskConversation] = useState<(typeof riskStudents)[number] | null>(null),
     [riskSpecialist, setRiskSpecialist] = useState('Гүлдана Рахметқали'),
     [caseFilter, setCaseFilter] = useState('all'),
     [planStatus, setPlanStatus] = useState<Record<string, 'done' | 'not_done'>>({});
@@ -329,7 +330,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
   const specialistProgress = specialists.map(([name, role]) => ({
     name,
     role,
-    count: referrals.filter((entry) => entry.method.startsWith(name + ' · ') && entry.status !== 'contact').length,
+    count: new Set(referrals.filter((entry) => entry.method.startsWith(name + ' · ') && entry.status !== 'contact').map((entry) => entry.title)).size,
   }));
   const selectedRiskStudents = useMemo(() => riskStudents.filter((student) => student.specialist === riskSpecialist), [riskSpecialist]);
   const riskCount = useCallback((name: string) => riskStudents.filter((student) => student.specialist === name).length, []);
@@ -357,6 +358,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
     setStatus('contact');
     setReferralTarget('');
     setReferralStudentId('');
+    setRiskConversation(null);
     setFormError('');
     setModal(kind);
   };
@@ -1001,7 +1003,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
             <section className="panel risk-roster" id="risk-student-list">
               <div className="panel-heading"><div><span className="risk-kicker">ТӘУЕКЕЛ ОҚУШЫЛАРЫ · {riskStudents.length}</span><h2>Оқушылар тізімі</h2><p>Excel тізімінен: тамыз және қыркүйек оқушылары</p></div></div>
               <div className="risk-caption"><b>{riskSpecialist}</b><span>{selectedRiskStudents.length} оқушы · Тамыз {selectedRiskStudents.filter((student) => student.stream === 'Тамыз').length} · Қыркүйек {selectedRiskStudents.filter((student) => student.stream === 'Қыркүйек').length}</span></div>
-              <div className="risk-student-table"><Table><TableHeader><TableRow><TableHead>Оқушы</TableHead><TableHead>Ағым</TableHead><TableHead>Куратор</TableHead></TableRow></TableHeader><TableBody>{selectedRiskStudents.map((student, index) => <TableRow key={`${student.name}-${index}`}><TableCell>{student.name}</TableCell><TableCell>{student.stream}</TableCell><TableCell>{student.curator}</TableCell></TableRow>)}</TableBody></Table></div>
+              <div className="risk-student-table"><Table><TableHeader><TableRow><TableHead>Оқушы</TableHead><TableHead>Ағым</TableHead><TableHead>Куратор</TableHead><TableHead>Нәтиже</TableHead><TableHead><span className="sr-only">Әрекет</span></TableHead></TableRow></TableHeader><TableBody>{selectedRiskStudents.map((student, index) => { const group = groups.find((item) => item.name === student.curator && item.stream.endsWith(student.stream === 'Тамыз' ? 'aug' : 'sep')); const lastEntry = [...referrals].reverse().find((entry) => entry.title === student.name && entry.method.startsWith(riskSpecialist + ' · ')); return <TableRow key={`${student.name}-${index}`}><TableCell>{student.name}</TableCell><TableCell>{student.stream}</TableCell><TableCell>{student.curator}</TableCell><TableCell>{lastEntry ? <span className={'status status-' + lastEntry.status}>{conversationStatuses.find((item) => item.value === lastEntry.status)?.label}</span> : <span className="muted">Сөйлеспеді</span>}</TableCell><TableCell><button className="referral-button" disabled={!group} onClick={() => { if (!group) return; setGroupId(group.id); setReferralStudentId(''); setRiskConversation(student); setReferralTarget(`${riskSpecialist} · ${specialists.find(([name]) => name === riskSpecialist)?.[1] || ''}`); setStatus('contact'); setModal('referral'); }}>{lastEntry ? 'Нәтижені өзгерту' : 'Сөйлесу нәтижесі'}</button></TableCell></TableRow>})}</TableBody></Table></div>
             </section>
             <section className="panel referrals-panel">
               <div className="panel-heading">
@@ -1371,7 +1373,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
                     label="Куратор және ағым"
                   />
                 </label>
-                <label>
+                {riskConversation ? <><label>Оқушы<input value={riskConversation.name} readOnly /></label><input type="hidden" name="title" value={riskConversation.name} /></> : <><label>
                   Оқушы
                   <Picker
                     value={referralStudentId}
@@ -1385,12 +1387,7 @@ export default function Home({ viewer }: { viewer: Curator }) {
                     ]}
                     label="Оқушыны таңдаңыз"
                   />
-                </label>
-                <input
-                  type="hidden"
-                  name="title"
-                  value={referralCandidates.find((student) => student.id === referralStudentId)?.name || ''}
-                />
+                </label><input type="hidden" name="title" value={referralCandidates.find((student) => student.id === referralStudentId)?.name || ''} /></>}
                 <label>
                   Таңдалған маман
                   <Picker
