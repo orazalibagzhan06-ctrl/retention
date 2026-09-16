@@ -132,6 +132,20 @@ const rrPlan = [
 const groupSchedule = [
   ['17.09, бейсенбі', 2, 4], ['18.09, жұма', 1, 4], ['21.09, дүйсенбі', 2, 3], ['22.09, сейсенбі', 1, 3], ['23.09, сәрсенбі', 2, 3], ['24.09, бейсенбі', 1, 3], ['25.09, жұма', 2, 3], ['28.09, дүйсенбі', 1, 3], ['29.09, сейсенбі', 1, 3], ['30.09, сәрсенбі', 1, 3],
 ] as const;
+const tiktokSchedule = [
+  ['17.09, бейсенбі', 'Шұғыла Амангелді · Бағжан Болат · Эльназ Ермек · Роза Жүніс · Ақбота Құдайберген'],
+  ['18.09, жұма', 'Аида Марбек · Шырын Нұрланқызы · Ақниет Серікбай · Молдир Скакова · Нұртас Жантас'],
+  ['19.09, сенбі', 'Меруерт Асембаева · Эльнура Ыгышова · Назерке Нұрболқызы · Жазира Тагайбекова · Жаннұр Шакизада'],
+  ['21.09, дүйсенбі', 'Ақүрпек Тұрсынқұл · Мухамед Гулмира · Ерасыл Жанболат · Балнұр Мырзабек · Арайлым Әбушахман'],
+  ['22.09, сейсенбі', 'Талғат Аружан · Айзере Сағатқызы · Айым Нұртулеу · Әсемай Әбдіжамил · Жұмабек Раушан'],
+  ['23.09, сәрсенбі', 'Анель Жоламан · Сабыров Абылай · Зере Мұратбай · Нұрдос Ырысбек · Ақнұр Нүсіп'],
+  ['24.09, бейсенбі', 'Зарина Мукашева · Қырықпа Інжу · Дастан Қайыржан · Ақнұр Ұзақова · Жайнар Сейдалиев'],
+  ['25.09, жұма', 'Ернар Алтынбек · Эльвира Ерлікқызы · Зерделі Тоқтарбайқызы · Дильназ Мухитова'],
+  ['26.09, сенбі', 'Аяжан Саркеева · Диана Сайлаугалиева · Нұрлы Қайрғалиева · Еркеназ Әмзебекова'],
+  ['28.09, дүйсенбі', 'Лэйла Ерсайнова · Ақбота Ғазиз · Асем Сейтимова · Алихан Жаумитов'],
+  ['29.09, сейсенбі', 'Іңкәр Жәрдемхан · Адина Мұраталы · Тамирлан Баяхмет · Мөлдір Дәлубайқызы'],
+  ['30.09, сәрсенбі', 'Жібек Қуат · Бақберген Амангелді · Аяулым Серік · Іңкәр Шохан'],
+] as const;
 function PlanCheck({ value, onChange, disabled }: { value?: 'done' | 'not_done'; onChange: (value: 'done' | 'not_done') => void; disabled: boolean }) { return <span className="plan-check"><button disabled={disabled} data-active={value === 'done'} onClick={() => onChange('done')}>✓ Орындалды</button><button disabled={disabled} data-active={value === 'not_done'} onClick={() => onChange('not_done')}>✕ Орындалмады</button></span>; }
 function Picker({
   value,
@@ -990,6 +1004,10 @@ export default function Home({ viewer }: { viewer: Curator }) {
               <section className="group-schedule" aria-label="Ортақ топ жүргізу кестесі">
                 <div><span>ОРТАҚ ТОП ЖҮРГІЗУ</span><h3>17–30 қыркүйек кестесі</h3><p>Сенбі мен жексенбі есепке алынбаған. 14 тамыз және 32 қыркүйек кураторы жұмыс күндеріне тең бөлінді.</p></div>
                 <div className="schedule-table"><div className="schedule-head"><span>Күні</span><span>Тамыз</span><span>Қыркүйек</span><span>Барлығы</span></div>{groupSchedule.map(([date, august, september]) => <div className="schedule-row" key={date}><span>{date}</span><span>{august} куратор <PlanCheck value={planStatus[`${date}-aug`]} onChange={(value) => void setPlanCheck(date, 'aug', value)} disabled={viewer.role === 'specialist' || (viewer.role === 'curator' && viewer.month !== 'aug')} /></span><span>{september} куратор <PlanCheck value={planStatus[`${date}-sep`]} onChange={(value) => void setPlanCheck(date, 'sep', value)} disabled={viewer.role === 'specialist' || (viewer.role === 'curator' && viewer.month !== 'sep')} /></span><b>{august + september} куратор</b></div>)}<div className="schedule-total"><span>Жалпы</span><b>14 куратор</b><b>32 куратор</b><b>46 куратор</b></div></div>
+              </section>
+              <section className="group-schedule" aria-label="TikTok жүргізу кестесі">
+                <div><span>TIKTOK ЖҮРГІЗУ</span><h3>17–30 қыркүйек кестесі</h3><p>55 куратор күндерге тең бөлінді. Жексенбі — демалыс: 20 және 27 қыркүйек кестеде жоқ.</p></div>
+                <div className="schedule-table"><div className="schedule-head"><span>Күні</span><span>Жауапты кураторлар</span><span>Мәртебе</span></div>{tiktokSchedule.map(([date, curators]) => <div className="schedule-row tiktok-row" key={date}><span>{date}</span><span>{curators}</span><PlanCheck value={planStatus[`${date}-tiktok`]} onChange={(value) => void setPlanCheck(date, 'tiktok', value)} disabled={viewer.role !== 'admin'} /></div>)}<div className="schedule-total"><span>Жалпы</span><b>55 куратор</b><b>12 күн</b></div></div>
               </section>
               {rrPlan.map((block) => (
                 <details key={block.section} className="rr-plan-block" open>
